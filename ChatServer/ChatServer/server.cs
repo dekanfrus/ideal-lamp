@@ -137,6 +137,17 @@ namespace ChatServer
         //***************************************************************************************
         public static void ReceiveData(IAsyncResult AsyncResult)
         {
+            string clientMessage = string.Empty;
+            ClientData clientState = (ClientData)AsyncResult.AsyncState;
+            Socket clientHandler = clientState.activeListener;
+
+            int dataReceived = clientHandler.EndReceive(AsyncResult);
+
+            if (dataReceived > 0)
+            {
+                clientState.clientString.Append(Encoding.ASCII.GetString(clientState.buffer, 0, dataReceived));
+            }
+            //100
 
         }// End of ReceiveData Function
     }
