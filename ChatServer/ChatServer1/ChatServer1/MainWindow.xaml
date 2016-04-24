@@ -1,0 +1,14 @@
+﻿<Window x:Class="ChatServer1.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ChatServer1"
+        mc:Ignorable="d"
+        Title="Welcome to J²A Chat Services" Height="299.02" Width="333.824" HorizontalAlignment="Center" ResizeMode="CanMinimize">
+    <Grid>
+        <Button x:Name="Log_In" Click="Login_Click"  Content="Log In" HorizontalAlignment="Left" Margin="118,69,0,0" Width="75" VerticalAlignment="Top"/>
+        <Button x:Name="Register" Click="Register_Click" Content="Register" HorizontalAlignment="Left" Margin="118,133,0,0" Width="75" VerticalAlignment="Top"/>
+
+    </Grid>
+</Window>
