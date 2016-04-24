@@ -40,6 +40,7 @@ namespace ChatServer
         public const int BufferSize = 1024;
         public byte[] buffer = new byte[BufferSize];
         public StringBuilder clientString = new StringBuilder();
+        public StringBuilder clientName = new StringBuilder();
     }
 
     //***************************************************************************************
@@ -133,15 +134,25 @@ namespace ChatServer
             Socket clientHandler = clientListener.EndAccept(AsyncResult);
             clientList.Add(clientHandler);
 
+            ClientData clientState = new ClientData();
+            clientState.activeListener = clientHandler;
+
             // This was the only way I could prevent the thread from closing and thus
-            // Preventing the client from only sending one message.  It's not very
-            // Efficient and makes the server lag a bit.
+            // Preventing the client from only sending one message.  It doesn't 
+            // Actually work right.  Instead it just keeps spawning new threads even
+            // if there isn't any new data.
             while (clientHandler.Connected)
             {
-                ClientData clientState = new ClientData();
-                clientState.activeListener = clientHandler;
-                clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
+                try
+                {
+                    clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
+                }
+                catch (Exception error)
+                {
+                    Console.WriteLine(error.ToString());
+                }
             }
+
 
         }// End of Accept function
 
@@ -157,38 +168,46 @@ namespace ChatServer
         {
 
             // Clear the message string and grab receiving client socket information
-            string clientMessage = string.Empty;
+
             ClientData clientState = (ClientData)AsyncResult.AsyncState;
             Socket clientHandler = clientState.activeListener;
 
-            int dataReceived = clientHandler.EndReceive(AsyncResult);
-
-            // Receive data from client
-            if (dataReceived > 0)
-                clientState.clientString.Append(Encoding.ASCII.GetString(clientState.buffer, 0, dataReceived));
-
-            // All data has been received from the client
-            if (clientState.clientString.Length > 1)
+            try
             {
-                clientMessage = clientState.clientString.ToString();
+                string clientMessage = string.Empty;
 
-                if (clientMessage.StartsWith("1"))
+                int dataReceived = clientHandler.EndReceive(AsyncResult);
+
+                // Receive data from client
+                if (dataReceived > 0)
                 {
-                    // Process Login
+                    clientState.clientString.Append(Encoding.ASCII.GetString(clientState.buffer, 0, dataReceived));
+
+                    clientMessage = clientState.clientString.ToString();
+
+                    if (clientMessage.StartsWith("1"))
+                    {
+                        // Process Login
+                    }
+                    else if (clientMessage.StartsWith("2"))
+                    {
+                        // Process Signup
+                    }
+                    else if (clientMessage.StartsWith("3"))
+                    {
+                        // Do something else
+                    }
+                    else
+                    {
+                        BroadcastMessage(clientMessage);
+
+                    }
                 }
-                else if (clientMessage.StartsWith("2"))
-                {
-                    // Process Signup
-                }
-                else if (clientMessage.StartsWith("3"))
-                {
-                    // Do something else
-                }
-                else
-                {
-                    BroadcastMessage(clientMessage);
-                }
-                
+            }
+
+            catch (Exception error)
+            {
+                Console.WriteLine(error.ToString());
             }
 
         }// End of ReceiveData Function
@@ -206,10 +225,6 @@ namespace ChatServer
         {
             Socket clientSocket = (Socket)AsyncResult.AsyncState;
             clientSocket.EndSend(AsyncResult);
-            if (clientList.Count > 1)
-            {
-
-            }
         }
 
         //*******************************************************************************************
