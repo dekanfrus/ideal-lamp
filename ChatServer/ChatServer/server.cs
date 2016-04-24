@@ -13,6 +13,7 @@
 //************************************************************************************************************************************
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
@@ -21,6 +22,7 @@ using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading;
+
 
 namespace ChatServer
 {
@@ -84,6 +86,10 @@ namespace ChatServer
                 ServerListener.Listen(100);
 
                 Console.WriteLine("[+] Server Program Running!");
+                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                {
+                    logWriter.WriteLine("[+] Server Program Running!");
+                }
 
                 // Infinite loop to make the server continually run and wait for connections
                 while (true)
@@ -139,6 +145,11 @@ namespace ChatServer
                 ClientData clientState = new ClientData();
                 clientState.activeListener = clientHandler;
 
+                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                {
+                    logWriter.WriteLine("[+] Connection Received");
+                }
+
                 clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
             }
             catch (Exception error)
@@ -180,11 +191,45 @@ namespace ChatServer
 
                     if (clientMessage.StartsWith("1"))
                     {
-                        Login();
+                        int success = Login();
+                        switch (success)
+                        {
+                            case 1:
+                                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                    logWriter.WriteLine("Login Successful!");
+                                break;
+                            case 2:
+                                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                    logWriter.WriteLine("Login Failed!  Username/Password combination.");
+                                break;
+                            default:
+                                break;
+                        }
                     }
                     else if (clientMessage.StartsWith("2"))
                     {
-                        Register();
+                        int success = Register();
+                        switch (success)
+                        {
+                            case 1:
+                                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                    logWriter.WriteLine("Registration Successful!");
+                                break;
+                            case 2:
+                                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                    logWriter.WriteLine("Registration Failed!  Invalid Email Address.");
+                                break;
+                            case 3:
+                                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                    logWriter.WriteLine("Registration Failed! Username already exists.");
+                                break;
+                            case 4:
+                                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                    logWriter.WriteLine("Registration Failed! Invalid Password.");
+                                break;
+                            default:
+                                break;
+                        }
                     }
                     else if (clientMessage.StartsWith("3"))
                     {
@@ -192,6 +237,11 @@ namespace ChatServer
                     }
                     else
                     {
+                        using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                        {
+                            logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+                            logWriter.WriteLine(clientMessage);
+                        }
                         BroadcastMessage(clientMessage);
                     }
                 }
@@ -219,20 +269,21 @@ namespace ChatServer
             clientSocket.EndSend(AsyncResult);
         }
 
-        public static bool Login()
+        public static int Login()
         {
             // If credentials matched and auth
             // was successful, then return true
-            // otherwise
-            return false;
+            // otherwise return error code
+            return 0;
         }
 
-        public static bool Register()
+        public static int Register()
         {
             // If signup was successful,
-            // return true;
-            // Otherwise
-            return false;
+            // return true
+            // Otherwise return error code
+
+            return 0;
         }
 
         //*******************************************************************************************
