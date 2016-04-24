@@ -1,9 +1,16 @@
-﻿//***************************************************************************************
-// Alex Urest, Jeff Hayslet, John Alves
-// Computer Networks COSC 4342 - Dr. Kar
-// Semester Project - Secure Chat Application
-// Spring 2016
-//***************************************************************************************
+﻿//************************************************************************************************************************************
+// Alex Urest, Jeff Hayslet, John Alves                                                                                             **
+// Computer Networks COSC 4342 - Dr. Kar                                                                                            **
+// Semester Project - Secure Chat Application                                                                                       **
+// Spring 2016                                                                                                                      **
+// References:                                                                                                                      **
+// https://msdn.microsoft.com/en-us/library/system.net.sockets.tcpclient.getstream%28v=vs.110%29.aspx?f=255&MSPPError=-2147217396   **
+// https://msdn.microsoft.com/en-us/library/system.net.sockets.tcplistener(v=vs.110).aspx                                           **
+// https://msdn.microsoft.com/en-us/library/system.threading.manualresetevent%28v=vs.110%29.aspx?f=255&MSPPError=-2147217396        **
+// https://msdn.microsoft.com/en-us/library/5w7b7x5f(v=vs.110).aspx                                                                 **
+// https://msdn.microsoft.com/en-us/library/5w7b7x5f%28v=vs.110%29.aspx?f=255&MSPPError=-2147217396                                 **
+// https://msdn.microsoft.com/en-us/library/fx6588te%28v=vs.110%29.aspx?f=255&MSPPError=-2147217396                                 **
+//************************************************************************************************************************************
 
 using System;
 using System.Collections.Generic;
@@ -50,17 +57,7 @@ namespace ChatServer
         public static ManualResetEvent completed = new ManualResetEvent(false);
 
         // Create a list of clients
-        public static Hashtable clientList = new Hashtable();
-        //***************************************************************************************
-        // Function Name: Main
-        // Description:
-        //
-        //
-        //
-        //
-        //
-        //***************************************************************************************
-        public static void Main() { server cServer = new server(); }
+        public static List<Socket> clientList = new List<Socket>();
 
         //***************************************************************************************
         // Function Name: server
@@ -73,34 +70,48 @@ namespace ChatServer
         //***************************************************************************************
         public server()
         {
+            // Retrieve the IP address of the local machine
+            IPHostEntry host = Dns.Resolve(Dns.GetHostName());
+            IPAddress ipAddress = host.AddressList[0];
+            IPEndPoint local = new IPEndPoint(ipAddress, 4444);
+
             try
             {
-                // Retrieve the IP address of the local machine
-                IPAddress ipAddress = Dns.GetHostEntry("localhost").AddressList[0];
-
                 // Create a listener and bind it to the local IP address and port 4444
-                TcpListener ServerListener = new TcpListener(ipAddress, 4444);
-                ServerListener.Start();
-                Console.WriteLine("[+] Server Program Running!");
+                Socket ServerListener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                ServerListener.Bind(local);
+                ServerListener.Listen(100);
 
-                //Byte[] bytes = new Byte[1024];
-                //String data = null;
+                Console.WriteLine("[+] Server Program Running!");
 
                 // Infinite loop to make the server continually run and wait for connections
                 while (true)
                 {
-                    Console.WriteLine("[+] Awaiting Connection...");
-                    
-                    // Connects to any pending client requests
-                    ServerListener.BeginAcceptTcpClient(new AsyncCallback(AcceptConnection), ServerListener);
+                    try
+                    {
+                        completed.Reset();
+                        Console.WriteLine("[+] Awaiting Connection...");
+
+                        // Connects to any pending client requests
+                        ServerListener.BeginAccept(new AsyncCallback(AcceptConnection), ServerListener);
+                    }
+                    catch (Exception error)
+                    {
+                        Console.WriteLine(error.ToString());
+                        Console.WriteLine("Press any key to exit");
+                        Console.ReadKey();
+                    }
 
                     // Signal parent thread to wait for a connection
                     completed.WaitOne();
+
                 }// End of while loop
             }
             catch (Exception error)
             {
                 Console.WriteLine(error.ToString());
+                Console.WriteLine("Press any key to exit");
+                Console.ReadKey();
             }
         } // End of server function
 
@@ -118,12 +129,19 @@ namespace ChatServer
             completed.Set();
 
             // Grab the client socket
-            Socket clientListener = (Socket) AsyncResult.AsyncState;
+            Socket clientListener = (Socket)AsyncResult.AsyncState;
             Socket clientHandler = clientListener.EndAccept(AsyncResult);
+            clientList.Add(clientHandler);
 
-            ClientData clientState = new ClientData();
-            clientState.activeListener = clientHandler;
-            clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
+            // This was the only way I could prevent the thread from closing and thus
+            // Preventing the client from only sending one message.  It's not very
+            // Efficient and makes the server lag a bit.
+            while (clientHandler.Connected)
+            {
+                ClientData clientState = new ClientData();
+                clientState.activeListener = clientHandler;
+                clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
+            }
 
         }// End of Accept function
 
@@ -137,18 +155,69 @@ namespace ChatServer
         //***************************************************************************************
         public static void ReceiveData(IAsyncResult AsyncResult)
         {
+
+            // Clear the message string and grab receiving client socket information
             string clientMessage = string.Empty;
             ClientData clientState = (ClientData)AsyncResult.AsyncState;
             Socket clientHandler = clientState.activeListener;
 
             int dataReceived = clientHandler.EndReceive(AsyncResult);
 
+            // Receive data from client
             if (dataReceived > 0)
-            {
                 clientState.clientString.Append(Encoding.ASCII.GetString(clientState.buffer, 0, dataReceived));
+
+            // All data has been received from the client
+            if (clientState.clientString.Length > 1)
+            {
+                clientMessage = clientState.clientString.ToString();
+
+                if (clientMessage.StartsWith("1"))
+                {
+                    // Process Login
+                }
+                else if (clientMessage.StartsWith("2"))
+                {
+                    // Process Signup
+                }
+                else if (clientMessage.StartsWith("3"))
+                {
+                    // Do something else
+                }
+                else
+                {
+                    BroadcastMessage(clientMessage);
+                }
+                
             }
-            //100
 
         }// End of ReceiveData Function
-    }
-}
+
+        public static void BroadcastMessage(string recvdMessage)
+        {
+            byte[] data = Encoding.ASCII.GetBytes(recvdMessage);
+            foreach (Socket current in clientList)
+            {
+                current.BeginSend(data, 0, data.Length, 0, new AsyncCallback(OnBroadcast), current);
+            }
+        }
+
+        public static void OnBroadcast(IAsyncResult AsyncResult)
+        {
+            Socket clientSocket = (Socket)AsyncResult.AsyncState;
+            clientSocket.EndSend(AsyncResult);
+            if (clientList.Count > 1)
+            {
+
+            }
+        }
+
+        //*******************************************************************************************
+        // Function Name: Main                                                                     **
+        // Description:  Main function of the server program, however it just dynamically creates  **
+        //               a new instance of the server() function.                                  **
+        //                                                                                         **
+        //*******************************************************************************************
+        public static void Main() { server cServer = new server(); }
+    } // End server class
+}// End class
