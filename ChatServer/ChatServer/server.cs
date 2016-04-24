@@ -183,6 +183,7 @@ namespace ChatServer
                 // Receive data from client
                 if (dataReceived > 0)
                 {
+                    clientState.clientString.Clear();
                     clientState.clientString.Append(Encoding.ASCII.GetString(clientState.buffer, 0, dataReceived));
 
                     clientMessage = clientState.clientString.ToString();
@@ -240,16 +241,20 @@ namespace ChatServer
                         using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
                         {
                             logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-                            logWriter.WriteLine(clientMessage);
+                            logWriter.Write(clientMessage);
                         }
                         BroadcastMessage(clientMessage);
                     }
                 }
             }
-
             catch (Exception error)
             {
                 Console.WriteLine(error.ToString());
+            }
+
+            if (clientHandler.Connected)
+            {
+                clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
             }
 
         }// End of ReceiveData Function
