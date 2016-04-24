@@ -132,27 +132,19 @@ namespace ChatServer
             // Grab the client socket
             Socket clientListener = (Socket)AsyncResult.AsyncState;
             Socket clientHandler = clientListener.EndAccept(AsyncResult);
-            clientList.Add(clientHandler);
 
-            ClientData clientState = new ClientData();
-            clientState.activeListener = clientHandler;
-
-            // This was the only way I could prevent the thread from closing and thus
-            // Preventing the client from only sending one message.  It doesn't 
-            // Actually work right.  Instead it just keeps spawning new threads even
-            // if there isn't any new data.
-            while (clientHandler.Connected)
+            try
             {
-                try
-                {
-                    clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
-                }
-                catch (Exception error)
-                {
-                    Console.WriteLine(error.ToString());
-                }
-            }
+                clientList.Add(clientHandler);
+                ClientData clientState = new ClientData();
+                clientState.activeListener = clientHandler;
 
+                clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine(error.ToString());
+            }
 
         }// End of Accept function
 
@@ -171,11 +163,10 @@ namespace ChatServer
 
             ClientData clientState = (ClientData)AsyncResult.AsyncState;
             Socket clientHandler = clientState.activeListener;
+            string clientMessage = string.Empty;
 
             try
             {
-                string clientMessage = string.Empty;
-
                 int dataReceived = clientHandler.EndReceive(AsyncResult);
 
                 // Receive data from client
@@ -185,13 +176,15 @@ namespace ChatServer
 
                     clientMessage = clientState.clientString.ToString();
 
+                    // Message Decryption Here
+
                     if (clientMessage.StartsWith("1"))
                     {
-                        // Process Login
+                        Login();
                     }
                     else if (clientMessage.StartsWith("2"))
                     {
-                        // Process Signup
+                        Register();
                     }
                     else if (clientMessage.StartsWith("3"))
                     {
@@ -200,7 +193,6 @@ namespace ChatServer
                     else
                     {
                         BroadcastMessage(clientMessage);
-
                     }
                 }
             }
@@ -225,6 +217,22 @@ namespace ChatServer
         {
             Socket clientSocket = (Socket)AsyncResult.AsyncState;
             clientSocket.EndSend(AsyncResult);
+        }
+
+        public static bool Login()
+        {
+            // If credentials matched and auth
+            // was successful, then return true
+            // otherwise
+            return false;
+        }
+
+        public static bool Register()
+        {
+            // If signup was successful,
+            // return true;
+            // Otherwise
+            return false;
         }
 
         //*******************************************************************************************
