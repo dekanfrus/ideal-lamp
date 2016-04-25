@@ -21,15 +21,15 @@ namespace ChatServer1
     /// </summary>
     public partial class Register : Window
     {
-        bool registrationStatus = false;
-        bool invalidEmail = false;
-        bool invalidUserName = false;
+        bool registrationStatus = true;
+        string registrationInformation;
         string userName;
         string email;
         string firstName;
         string lastName;
         string password;
         string passwordVerify;
+        int port = 4444;
         public Register()
         {
             InitializeComponent();
@@ -45,13 +45,29 @@ namespace ChatServer1
             register_submit_error.Visibility = Visibility.Collapsed;
             register_password_mismatch.Visibility = Visibility.Collapsed;
             if (userName == null || email == null || firstName == null || lastName == null || password == null || passwordVerify == null)
+            {
                 register_submit_error.Visibility = Visibility.Visible;
+                registrationStatus = false;
+            }
             if (password != passwordVerify)
+            {
                 register_password_mismatch.Visibility = Visibility.Visible;
+                registrationStatus = false;
+            }
             
             //send data to server
-
+            if(registrationStatus)
+            {
+                registrationInformation = "2000:" + userName + ":" + password + ":" + email + ":" + firstName + ":" + lastName;
+                IPHostEntry host = Dns.Resolve(Dns.GetHostName());
+                IPAddress ipAddress = host.AddressList[0];
+                Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                s.Connect(ipAddress, port);
+                s.Send(Encoding.UTF8.GetBytes(registrationInformation));
+            }
+           
             //wait for response
+
 
             //if registration good proceed to login page else show error
             if(registrationStatus)
@@ -60,13 +76,13 @@ namespace ChatServer1
                 chatwindow.Show();
                 this.Close();
             }
-            else
-            {
-                if (!invalidEmail)
-                    registration_email_error.Visibility = Visibility.Visible;
-                if (!invalidUserName)
-                    registration_username_error.Visibility = Visibility.Visible;
-            }
+            //else
+            //{
+            //    if (!invalidEmail)
+            //        registration_email_error.Visibility = Visibility.Visible;
+            //    if (!invalidUserName)
+            //        registration_username_error.Visibility = Visibility.Visible;
+            //}
         }
 
         private void register_cancel_Click(object sender, RoutedEventArgs e)
