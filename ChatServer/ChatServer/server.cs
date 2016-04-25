@@ -90,6 +90,7 @@ namespace ChatServer
                 {
                     logWriter.WriteLine("[+] Server Program Running!");
                 }
+                Console.WriteLine("[+] Awaiting Connection...");
 
                 // Infinite loop to make the server continually run and wait for connections
                 while (true)
@@ -97,7 +98,7 @@ namespace ChatServer
                     try
                     {
                         completed.Reset();
-                        Console.WriteLine("[+] Awaiting Connection...");
+                        //Console.WriteLine("[+] Awaiting Connection...");
 
                         // Connects to any pending client requests
                         ServerListener.BeginAccept(new AsyncCallback(AcceptConnection), ServerListener);
@@ -149,6 +150,7 @@ namespace ChatServer
                 {
                     logWriter.WriteLine("[+] Connection Received");
                 }
+                Console.WriteLine("[+] Connection Received");
 
                 clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
             }
@@ -197,11 +199,13 @@ namespace ChatServer
                         {
                             case 1:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-                                    logWriter.WriteLine("Login Successful!");
+                                    logWriter.WriteLine("[+] Login Successful!");
+                                Console.WriteLine("[+] Login Successful!");
                                 break;
                             case 2:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-                                    logWriter.WriteLine("Login Failed!  Username/Password combination.");
+                                    logWriter.WriteLine("[+] Login Failed!  Username/Password combination.");
+                                Console.WriteLine("[+] Login Failed!  Username/Password combination.");
                                 break;
                             default:
                                 break;
@@ -214,19 +218,23 @@ namespace ChatServer
                         {
                             case 1:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-                                    logWriter.WriteLine("Registration Successful!");
+                                    logWriter.WriteLine("[+] Registration Successful!");
+                                Console.WriteLine("[+] Registration Successful!");
                                 break;
                             case 2:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-                                    logWriter.WriteLine("Registration Failed!  Invalid Email Address.");
+                                    logWriter.WriteLine("[+] Registration Failed!  Invalid Email Address.");
+                                Console.WriteLine("[+] Registration Failed!  Invalid Email Address.");
                                 break;
                             case 3:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-                                    logWriter.WriteLine("Registration Failed! Username already exists.");
+                                    logWriter.WriteLine("[+] Registration Failed! Username already exists.");
+                                Console.WriteLine("[+] Registration Failed! Username already exists.");
                                 break;
                             case 4:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-                                    logWriter.WriteLine("Registration Failed! Invalid Password.");
+                                    logWriter.WriteLine("[+] Registration Failed! Invalid Password.");
+                                Console.WriteLine("[+] Registration Failed! Invalid Password.");
                                 break;
                             default:
                                 break;
@@ -261,6 +269,9 @@ namespace ChatServer
 
         public static void BroadcastMessage(string recvdMessage)
         {
+            Console.Write(recvdMessage);
+            // Message encryption here
+
             byte[] data = Encoding.ASCII.GetBytes(recvdMessage);
             foreach (Socket current in clientList)
             {
@@ -279,7 +290,7 @@ namespace ChatServer
             // If credentials matched and auth
             // was successful, then return true
             // otherwise return error code
-            return 0;
+            return 1;
         }
 
         public static int Register()
@@ -288,7 +299,7 @@ namespace ChatServer
             // return true
             // Otherwise return error code
 
-            return 0;
+            return 1;
         }
 
         //*******************************************************************************************
