@@ -22,6 +22,8 @@ using System.Net;
 using System.Threading;
 using System.Security.Cryptography;
 using System.Linq;
+using System.Data.SqlClient;
+using System.Configuration;
 
 
 namespace ChatServer
@@ -99,8 +101,11 @@ namespace ChatServer
                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                     logWriter.WriteLine("[+] Server Program Running!");
                 }
-                Console.WriteLine("[+] Awaiting Connection...");
+                
+                //Attempt to establish a connection with the database
+                server.ConnectToDB();
 
+                Console.WriteLine("[+] Awaiting Connection...");
                 // Infinite loop to make the server continually run and wait for connections
                 while (true)
                 {
@@ -179,6 +184,59 @@ namespace ChatServer
         }// End of Accept function
 
         //***************************************************************************************
+        // Function Name: ConnectToDB
+        // Description: 
+        // Attempts to establish a connection with the EC2 MSSQL database 
+        // 
+        //
+        //
+        //***************************************************************************************
+        public static bool ConnectToDB()
+        {
+
+            //Check to see if the server can initiate a connection to the database server - ADU
+            Console.WriteLine("[+] Checking to see if the database is connected...");
+            try
+            {
+                using (SqlConnection dbConnection = new SqlConnection())
+                {
+                    //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
+                    dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
+
+                    //Open up connection to database
+                    dbConnection.Open();
+
+                    //just for debugging purposes will remove once code is in production - ADU
+                    Console.WriteLine("[+] DB connected!");
+
+                    //return true; 
+                    //more debugging here to see if I can query items on that database.
+                    SqlCommand command = new SqlCommand("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='ChatServer' ", dbConnection); // Need to verify how this will work....
+
+                    //just for debugging purposes to read queried response will modify code - ADU
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        // while there is another record present
+                        while (reader.Read())
+                        {
+                            // write the data on to the screen
+                            Console.WriteLine(reader.NextResult());
+                        }
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine("[+] DB did not connect!");
+                Console.WriteLine(error.ToString());
+                return false; //database did not connect successfully cannot authenticate users
+            }
+
+
+            return true;
+        }// End of ConnectToDB Function
+
+        //***************************************************************************************
         // Function Name: ReceiveData
         // Description: 
         //
@@ -207,10 +265,10 @@ namespace ChatServer
                     clientState.clientString.Append(Encoding.ASCII.GetString(clientState.buffer, 0, dataReceived));
 
                     // Convert the message from a StringBuilder to string
-                    EncryptedMessage = clientState.clientString.ToString();
+                    string EncryptedMessage = clientState.clientString.ToString();
 
                     // Decrypt the client message
-                    string clientMessage = DecryptData(clientMessage);
+                    clientMessage = DecryptData(EncryptedMessage);
 
                     // Handle Login code
                     if (clientMessage.StartsWith("1000"))
@@ -351,7 +409,7 @@ namespace ChatServer
             // Output to server console.  Primarily for testing purposes.
             Console.Write("Plain Text Message: ");
             Console.Write(recvdMessage);
-            recvdMessage = encryptData(recvdMessage);
+            recvdMessage = EncryptData(recvdMessage);
             Console.Write("Encrypted Message: ");
             Console.WriteLine(recvdMessage);
 
@@ -506,7 +564,8 @@ namespace ChatServer
         //*******************************************************************************************
         public static string DecryptData(string message)
         {
-            return System.Text.Encoding.UTF8.GetString(message);
+            Byte[] MessageBytes = Encoding.UTF8.GetBytes(message);
+            return System.Text.Encoding.UTF8.GetString(MessageBytes);
         }
 
         //*******************************************************************************************
