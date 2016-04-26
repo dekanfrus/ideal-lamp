@@ -32,7 +32,7 @@ namespace ChatServer1
         }
         private void Register_Click(object sender, RoutedEventArgs e)
         {
-            Register registerwindow = new ChatServer1.Register();
+            Register registerwindow = new Register();
             registerwindow.Show();
             this.Close();
         }
