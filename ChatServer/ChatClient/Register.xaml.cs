@@ -13,28 +13,26 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace ChatServer1
+namespace ChatClient
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for Register.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class Register : UserControl
     {
-        public MainWindow()
+        public Register()
         {
             InitializeComponent();
         }
-        private void Login_Click(object sender, RoutedEventArgs e)
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            Login loginwindow = new Login();
-            loginwindow.Show();
-            this.Close();
+
         }
-        private void Register_Click(object sender, RoutedEventArgs e)
+
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
-            Register registerwindow = new Register();
-            registerwindow.Show();
-            this.Close();
+
         }
     }
 }
