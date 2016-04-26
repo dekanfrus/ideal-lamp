@@ -25,7 +25,9 @@ namespace ChatServer1
         byte[] buffer = new byte[300];
         Socket s;
         string messageRecvd = "this is a test";
-       
+        System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
+        
+
         public ChatWindow(Socket x)
         {
             InitializeComponent();
@@ -34,7 +36,7 @@ namespace ChatServer1
         //make a custom event based on s.Poll(-1, SelectMode.SelectRead)
         //try following link solution in a ContentRendered event.
         //http://stackoverflow.com/questions/11559999/how-do-i-create-a-timer-in-wpf 
-        public async Task SocketListen()
+        public void SocketListen(object sender, EventArgs e)
         {
             s.Receive(buffer);
             if (buffer[0] != 0)
@@ -60,7 +62,14 @@ namespace ChatServer1
             chat_window_text_box.AppendText(chatWindowMessage.First());
             Array.Clear(buffer, 0, buffer.Length);
         }
-        
+
+        private void Window_ContentRendered(object sender, EventArgs e)
+        {
+            dispatcherTimer.Tick += new EventHandler(SocketListen);
+            dispatcherTimer.Interval = new TimeSpan(0, 5, 0);
+            dispatcherTimer.Start();
+        }
+
         //private async void Window_ContentRendered(object sender, EventArgs e)
         //{
         //    if (s.Poll(-1, SelectMode.SelectRead))
