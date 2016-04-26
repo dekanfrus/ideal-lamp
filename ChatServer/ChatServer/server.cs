@@ -14,6 +14,9 @@ using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading;
+using System.Data.SqlClient; 
+using System.Configuration;
+using System.Data;
 
 namespace ChatServer
 {
@@ -25,8 +28,10 @@ namespace ChatServer
     //
     //
     //***************************************************************************************
+    
     public class ClientData
     {
+        
         // Creates a state object that allows the server to receive a string of data from the client
         // State Objects are required for Asynchronous server implementations
         public Socket activeListener = null;
@@ -85,6 +90,17 @@ namespace ChatServer
 
                 //Byte[] bytes = new Byte[1024];
                 //String data = null;
+               
+               //Try to have the chat server initiate a connection with the database
+               try
+               {
+                   server.ConnectToDB();
+               }
+               catch (Exception error)
+               {
+                   Console.WriteLine(error.ToString());
+               }
+
 
                 // Infinite loop to make the server continually run and wait for connections
                 while (true)
@@ -138,6 +154,60 @@ namespace ChatServer
         public static void ReceiveData(IAsyncResult AsyncResult)
         {
 
+        }// End of ReceiveData Function
+
+
+        //***************************************************************************************
+        // Function Name: ConnectToDB
+        // Description: 
+        // Attempts to establish a connection with the EC2 MSSQL database 
+        // 
+        //
+        //
+        //***************************************************************************************
+        public static bool ConnectToDB()
+        {
+
+            //Check to see if the server can initiate a connection to the database server - ADU
+            Console.WriteLine("[+] Checking to see if the database is connected...");
+            try
+            {
+                using (SqlConnection dbConnection = new SqlConnection())
+                {
+                    //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
+                    dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
+                   
+                    //Open up connection to database
+                    dbConnection.Open();
+
+                    //just for debugging purposes will remove once code is in production - ADU
+                    Console.WriteLine("[+] DB connected!");
+
+                    //return true; 
+                    //more debugging here to see if I can query items on that database.
+                    SqlCommand command = new SqlCommand("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='ChatServer' ", dbConnection); // Need to verify how this will work....
+
+                    //just for debugging purposes to read queried response will modify code - ADU
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        // while there is another record present
+                        while (reader.Read())
+                        {
+                            // write the data on to the screen
+                            Console.WriteLine(reader.NextResult());
+                        }
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine("[+] DB did not connect!");
+                Console.WriteLine(error.ToString());
+                return false; //database did not connect successfully cannot authenticate users
+            }
+
+
+            return true;
         }// End of ReceiveData Function
     }
 }
