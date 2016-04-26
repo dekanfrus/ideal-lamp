@@ -13,15 +13,15 @@
 //************************************************************************************************************************************
 
 using System;
+using System.Data;
 using System.IO;
 using System.Collections.Generic;
-using System.Collections;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading;
+using System.Security.Cryptography;
+using System.Linq;
 
 
 namespace ChatServer
@@ -62,6 +62,20 @@ namespace ChatServer
         // Create a list of clients
         public static List<Socket> clientList = new List<Socket>();
 
+        // Salt and Initialization Vector values for encryption of data
+        private static byte[] Salt = {2, 123,  61, 217, 205, 133, 176, 171, 164, 248, 215, 129, 232, 210, 145, 56, 
+ 45, 133,  55, 137,  95, 174, 245, 179, 205, 140, 190, 215, 110, 122, 169, 95 };
+
+        private static byte[] IV = {9,  90,  56,  18, 127, 245, 101, 112,  72, 133, 248, 224,  73,  12,  96,  24, };
+
+        private static ICryptoTransform Encryptor, Decryptor;
+        private static System.Text.UTF8Encoding Encoder;
+
+        public static void SetupEncryption()
+        {
+            
+        }
+
         //***************************************************************************************
         // Function Name: server
         // Description:
@@ -88,6 +102,7 @@ namespace ChatServer
                 Console.WriteLine("[+] Server Program Running!");
                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
                 {
+                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                     logWriter.WriteLine("[+] Server Program Running!");
                 }
                 Console.WriteLine("[+] Awaiting Connection...");
@@ -148,9 +163,13 @@ namespace ChatServer
 
                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
                 {
+                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                     logWriter.WriteLine("[+] Connection Received");
                 }
                 Console.WriteLine("[+] Connection Received");
+
+                // Send updated users list to all clients
+                BroadcastUsers();
 
                 clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
             }
@@ -199,41 +218,59 @@ namespace ChatServer
                         {
                             case 1:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                {
+                                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Login Successful!");
+                                }
                                 Console.WriteLine("[+] Login Successful!");
                                 break;
                             case 2:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                {
+                                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Login Failed!  Username/Password combination.");
+                                }
                                 Console.WriteLine("[+] Login Failed!  Username/Password combination.");
                                 break;
                             default:
                                 break;
                         }
                     }
-                    else if (clientMessage.StartsWith("2"))
+                    else if (clientMessage.StartsWith("2000"))
                     {
-                        int success = Register();
+                        int success = Register(clientMessage);
                         switch (success)
                         {
                             case 1:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                {
+                                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Successful!");
+                                }
                                 Console.WriteLine("[+] Registration Successful!");
                                 break;
                             case 2:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                {
+                                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Failed!  Invalid Email Address.");
+                                }
                                 Console.WriteLine("[+] Registration Failed!  Invalid Email Address.");
                                 break;
                             case 3:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                {
+                                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Failed! Username already exists.");
+                                }
                                 Console.WriteLine("[+] Registration Failed! Username already exists.");
                                 break;
                             case 4:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                                {
+                                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Failed! Invalid Password.");
+                                }
                                 Console.WriteLine("[+] Registration Failed! Invalid Password.");
                                 break;
                             default:
@@ -265,12 +302,20 @@ namespace ChatServer
                 clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
             }
 
+            if (!clientHandler.Connected)
+            {
+                // Remove clientState.activeListener from the linked list
+                // Then send new Users data to the client
+                BroadcastUsers();
+            }
+
         }// End of ReceiveData Function
 
         public static void BroadcastMessage(string recvdMessage)
         {
             Console.Write(recvdMessage);
-            // Message encryption here
+            recvdMessage = encryptData(recvdMessage);
+            Console.Write(recvdMessage);
 
             byte[] data = Encoding.ASCII.GetBytes(recvdMessage);
             foreach (Socket current in clientList)
@@ -278,7 +323,17 @@ namespace ChatServer
                 current.BeginSend(data, 0, data.Length, 0, new AsyncCallback(OnBroadcast), current);
             }
         }
+        public static void BroadcastUsers()
+        {
 
+            //recvdMessage = encryptData(recvdMessage);
+
+            //byte[] data = Encoding.ASCII.GetBytes(clientList);
+            //foreach (Socket current in clientList)
+            //{
+            //    current.BeginSend(data, 0, data.Length, 0, new AsyncCallback(OnBroadcast), current);
+            //}
+        }
         public static void OnBroadcast(IAsyncResult AsyncResult)
         {
             Socket clientSocket = (Socket)AsyncResult.AsyncState;
@@ -287,8 +342,7 @@ namespace ChatServer
 
         public static int Login(string loginInfo)
         {
-            char[] delim = { ':' };
-            string[] creds = loginInfo.Split(delim);
+            string[] creds = loginInfo.Split(':');
 
             string userName = creds[1];
             string userPassword = creds[2];
@@ -299,8 +353,16 @@ namespace ChatServer
             return 1;
         }
 
-        public static int Register()
+        public static int Register(string RegisterInfo)
         {
+            string[] creds = RegisterInfo.Split(':');
+
+            string userName = creds[1];
+            string userPassword = creds[2];
+            string userEmail = creds[3];
+            string userFirstName = creds[4];
+            string userLastName = creds[5];
+
             // If signup was successful,
             // return true
             // Otherwise return error code
@@ -308,6 +370,45 @@ namespace ChatServer
             return 1;
         }
 
+        public static string encryptData(string message)
+        {
+            RijndaelManaged AESEncrypt = new RijndaelManaged();
+            Encryptor = AESEncrypt.CreateEncryptor(Salt, IV);
+            Decryptor = AESEncrypt.CreateDecryptor(Salt, IV);
+
+            Encoder = new System.Text.UTF8Encoding();
+
+            try
+            {
+                Byte[] MessageBytes = Encoding.UTF8.GetBytes(message);
+
+                MemoryStream mStream = new MemoryStream();
+                CryptoStream cStream = new CryptoStream(mStream, Encryptor, CryptoStreamMode.Write);
+
+                cStream.Write(MessageBytes, 0, MessageBytes.Length);
+                cStream.FlushFinalBlock();
+
+                mStream.Position = 0;
+                byte[] EncryptedMessage = new byte[mStream.Length];
+                mStream.Read(EncryptedMessage, 0, EncryptedMessage.Length);
+
+                cStream.Close();
+                mStream.Close();
+
+                return System.Text.Encoding.UTF8.GetString(EncryptedMessage);
+            }
+            catch (Exception error)
+            {
+                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                {
+                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+                    logWriter.Write(error.ToString());
+                }
+                Console.WriteLine(error.ToString());
+                Thread tid = Thread.CurrentThread;
+                return error.ToString();
+            }
+        }
         //*******************************************************************************************
         // Function Name: Main                                                                     **
         // Description:  Main function of the server program, however it just dynamically creates  **
