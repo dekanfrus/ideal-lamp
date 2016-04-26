@@ -208,6 +208,6 @@ namespace ChatServer
 
 
             return true;
-        }// End of ReceiveData Function
+        }// End of ConnectToDB Function
     }
 }
