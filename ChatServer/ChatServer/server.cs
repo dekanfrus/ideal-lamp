@@ -207,10 +207,10 @@ namespace ChatServer
                     clientState.clientString.Append(Encoding.ASCII.GetString(clientState.buffer, 0, dataReceived));
 
                     // Convert the message from a StringBuilder to string
-                    EncryptedMessage = clientState.clientString.ToString();
+                    string EncryptedMessage = clientState.clientString.ToString();
 
                     // Decrypt the client message
-                    string clientMessage = DecryptData(clientMessage);
+                    clientMessage = DecryptData(EncryptedMessage);
 
                     // Handle Login code
                     if (clientMessage.StartsWith("1000"))
@@ -351,7 +351,7 @@ namespace ChatServer
             // Output to server console.  Primarily for testing purposes.
             Console.Write("Plain Text Message: ");
             Console.Write(recvdMessage);
-            recvdMessage = encryptData(recvdMessage);
+            recvdMessage = EncryptData(recvdMessage);
             Console.Write("Encrypted Message: ");
             Console.WriteLine(recvdMessage);
 
@@ -506,7 +506,8 @@ namespace ChatServer
         //*******************************************************************************************
         public static string DecryptData(string message)
         {
-            return System.Text.Encoding.UTF8.GetString(message);
+            Byte[] MessageBytes = Encoding.UTF8.GetBytes(message);
+            return System.Text.Encoding.UTF8.GetString(MessageBytes);
         }
 
         //*******************************************************************************************
