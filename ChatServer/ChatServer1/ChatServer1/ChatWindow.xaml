@@ -5,16 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatServer1"
         mc:Ignorable="d"
-        Title="J²A Chat Services" Height="300" Width="521.008">
-    <Grid>
+        Title="J²A Chat Services" Height="365" Width="705" WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize">
+    <Grid Background="#FF1D368B" Margin="0,0,0,-20
+          ">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="275*"/>
-            <ColumnDefinition Width="238*"/>
+            <ColumnDefinition Width="699*"/>
         </Grid.ColumnDefinitions>
-        <TextBox x:Name="chat_window_text_box"  HorizontalAlignment="Left" Height="222" Margin="10,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="416" IsReadOnly="True" AcceptsReturn="True" Grid.ColumnSpan="2"/>
-        <TextBox x:Name="chat_window_message_input" TextChanged="chat_window_message_input_TextChanged" HorizontalAlignment="Left" Height="23" Margin="10,237,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="336" Grid.ColumnSpan="2"/>
-        <Button x:Name="chat_window_submit_message" Click="chat_window_submit_message_Click" Content="Submit" HorizontalAlignment="Left" Margin="76,238,0,0" VerticalAlignment="Top" Width="75" Grid.Column="1"/>
-        <TextBox x:Name="chat_window_users_list" HorizontalAlignment="Left" Height="188" Margin="156,44,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="82" Grid.Column="1"/>
-        <Label x:Name="chatwindow_user_list_label" Content="Users" HorizontalAlignment="Left" Margin="156,13,0,0" VerticalAlignment="Top" Width="82" RenderTransformOrigin="0.856,0.407" Grid.Column="1"/>
+        <TextBox x:Name="chat_window_text_box" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Height="277" Margin="10,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="586" IsReadOnly="True" AcceptsReturn="True" Background="#FF7984AC"/>
+        <TextBox x:Name="chat_window_message_input" TextChanged="chat_window_message_input_TextChanged" HorizontalAlignment="Left" Height="23" Margin="10,292,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="506" Background="#FF7984AC"/>
+        <Button x:Name="chat_window_submit_message" Click="chat_window_submit_message_Click" Content="Submit" HorizontalAlignment="Left" Margin="524,292,0,0" VerticalAlignment="Top" Width="75" Height="22"/>
+        <TextBox x:Name="chat_window_users_list" HorizontalAlignment="Left" Height="243" Margin="601,44,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="82" Background="#FF7984AC"/>
+        <Label x:Name="chatwindow_user_list_label" Content="Users" HorizontalAlignment="Left" Margin="601,10,0,0" VerticalAlignment="Top" Width="82" RenderTransformOrigin="0.856,0.407" Background="#FF7984AC" Height="26"/>
     </Grid>
 </Window>

@@ -100,6 +100,7 @@ namespace ChatServer1
             {
                 //create data stream to send registration information
                 registrationInformation = register + ":" + userName + ":" + password + ":" + email + ":" + firstName + ":" + lastName;
+                
                 //send registration data through socket s
                 s.Send(Encoding.UTF8.GetBytes(registrationInformation));
                 

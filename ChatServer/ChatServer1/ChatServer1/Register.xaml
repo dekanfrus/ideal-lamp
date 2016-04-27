@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatServer1"
         mc:Ignorable="d"
-        Title="J²A Chat Services Registration" Height="300" Width="305.881" ResizeMode="CanMinimize">
-    <Grid>
+        Title="J²A Chat Services Registration" Height="300" Width="305.881" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen">
+    <Grid Background="#FF1D368B">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="87*"/>
             <ColumnDefinition Width="59*"/>
@@ -25,9 +25,9 @@
         <TextBox x:Name="last_name_text_box" TextChanged="last_name_text_box_TextChanged" HorizontalAlignment="Left" Height="23" Margin="106,159,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
         <PasswordBox x:Name="register_passwordBox" PasswordChanged="register_passwordBox_PasswordChanged" HorizontalAlignment="Left" Margin="106,51,0,0" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
         <PasswordBox x:Name="register_passwordBox_verify" PasswordChanged="register_passwordBox_verify_PasswordChanged"  HorizontalAlignment="Left" Margin="106,76,0,0" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
-        <Label x:Name="register_password_mismatch" Content="Password&#xD;&#xA;Mismatch" Grid.Column="1" HorizontalAlignment="Left" Margin="53,53,0,0" VerticalAlignment="Top" Background="White" Foreground="#FFF50F0F"/>
+        <Label x:Name="register_password_mismatch" Content="Password&#xD;&#xA;Mismatch" Grid.Column="1" HorizontalAlignment="Left" Margin="53,53,0,0" VerticalAlignment="Top" Background="#FF1D368B" Foreground="#FFF50F0F"/>
         <Label x:Name="register_submit_error" Content="Please fill out all fields" HorizontalAlignment="Left" Margin="98,187,0,0" VerticalAlignment="Top" Height="27" Grid.ColumnSpan="2" Width="128" Foreground="#FFF90808"/>
-        <Label x:Name="registration_username_error" Content="Invalid" Grid.Column="1" HorizontalAlignment="Left" Margin="53,19,0,0" VerticalAlignment="Top" Background="White" Foreground="#FFF50505"/>
+        <Label x:Name="registration_username_error" Content="Invalid" Grid.Column="1" HorizontalAlignment="Left" Margin="53,19,0,0" VerticalAlignment="Top" Background="#FF1D368B" Foreground="#FFF50505"/>
 
     </Grid>
 </Window>

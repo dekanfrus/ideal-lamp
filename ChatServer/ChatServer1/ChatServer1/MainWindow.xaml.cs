@@ -23,7 +23,7 @@ namespace ChatServer1
         public MainWindow()
         {
             InitializeComponent();
-            
+                     
         }
         private void Login_Click(object sender, RoutedEventArgs e)
         {

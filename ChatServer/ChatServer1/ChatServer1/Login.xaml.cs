@@ -24,8 +24,8 @@ namespace ChatServer1
     /// </summary>
     public partial class Login : Window
     {
-        bool loginGood = true;
-        string loginData;
+        //bool loginGood = true;
+        //string loginData;
         string userName;
         string password;
         int port = 4444;
