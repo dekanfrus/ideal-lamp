@@ -16,6 +16,9 @@ using System.Net;
 
 namespace ChatServer1
 {
+    //add encryption and decryption
+    //encrypt data after login clicked before sending through the socket
+    //decrypt response from server 
     /// <summary>
     /// Interaction logic for Login.xaml
     /// </summary>
@@ -35,6 +38,7 @@ namespace ChatServer1
         public Login()
         {
             InitializeComponent();
+            login_submit.IsEnabled = false;
             //hide the error message label on Log In page for invalid password or user name
             login_error_message.Visibility = Visibility.Collapsed;
             IPHostEntry host = Dns.Resolve(Dns.GetHostName());
@@ -47,6 +51,7 @@ namespace ChatServer1
         {
             //string host = Dns.GetHostName();
             string loginInformation = "1000:" + userName + ":" + password;
+            //encrypt loginInformation here
             s.Send(Encoding.UTF8.GetBytes(loginInformation));
         }
 
@@ -68,6 +73,7 @@ namespace ChatServer1
             //get response
             byte[] buffer = new byte[300];
             s.Receive(buffer);
+            //decrypt the buffer here
             loginStatus = Int32.Parse(Encoding.UTF8.GetString(buffer));
 
             //if status returned from server for log in is good then proceed to chat window
@@ -84,16 +90,24 @@ namespace ChatServer1
 
         }
 
-        private void passwordBox_PasswordChanged(object sender, RoutedEventArgs e)
+        private void login_passwordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
             var pwdBox = sender as PasswordBox;
             password = pwdBox.Password;
+            if (password == null || userName == null || pwdBox.Password == "")
+                login_submit.IsEnabled = false;
+            else
+                login_submit.IsEnabled = true;
         }
 
         private void login_username_TextChanged(object sender, TextChangedEventArgs e)
         {
             var textBox = sender as TextBox;
             userName = textBox.Text;
+            if (password == null || userName == null || textBox.Text == "")
+                login_submit.IsEnabled = false;
+            else
+                login_submit.IsEnabled = true;
         }
     }
 }

@@ -16,6 +16,9 @@ using System.Net;
 
 namespace ChatServer1
 {
+    //add encryption and decryption to this window
+    //encrypt data being sent after submit button selected
+    //decrypt data being received from the server
     /// <summary>
     /// Interaction logic for ChatWindow.xaml
     /// </summary>
@@ -49,6 +52,7 @@ namespace ChatServer1
             try
             {
                 s.Receive(buffer);
+                //decrypt buffer here
                 if (buffer[0] != '\0')
                 {
                     messageRecvd = Encoding.UTF8.GetString(buffer);
@@ -79,6 +83,7 @@ namespace ChatServer1
             //prepend messages with username used to log in.  Will have to pass that to the client from the login page along with the socket.
             //Add the encrypt function call here
             message = UserName + ": " + message + "\n";
+            //encrypt message here
             s.Send(Encoding.UTF8.GetBytes(message));
             chat_window_message_input.Clear();
         }

@@ -16,6 +16,9 @@ using System.Net;
 
 namespace ChatServer1
 {
+    //add encryption and decryption here
+    //encryption on message after register clicked before sending it
+    //decryption after the receive of server response
     /// <summary>
     /// Interaction logic for Register.xaml
     /// </summary>
@@ -50,7 +53,8 @@ namespace ChatServer1
 
         private void submit_button_enable_disable()
         {
-            if (userName != null && email != null && firstName != null && lastName != null && password != null && passwordVerify != null && password == passwordVerify)
+            if (userName != null && email != null && firstName != null && lastName != null && password != null && passwordVerify != null && password == passwordVerify && user_name_textbox.Text != ""
+                && register_passwordBox.Password != "" && register_passwordBox_verify.Password != "" && email_text_box.Text != "" && first_name_text_box.Text != "" && last_name_text_box.Text != "")
                 register_submit.IsEnabled = true;
             else
                 register_submit.IsEnabled = false;
