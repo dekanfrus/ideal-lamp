@@ -101,9 +101,6 @@ namespace ChatServer
                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                     logWriter.WriteLine("[+] Server Program Running!");
                 }
-                
-                //Attempt to establish a connection with the database
-                server.ConnectToDB();
 
                 Console.WriteLine("[+] Awaiting Connection...");
                 // Infinite loop to make the server continually run and wait for connections
@@ -191,43 +188,33 @@ namespace ChatServer
         //
         //
         //***************************************************************************************
-        public static bool ConnectToDB()
+        public static bool ConnectToDB(string SqlCommandCreds)
         {
 
             //Check to see if the server can initiate a connection to the database server - ADU
             Console.WriteLine("[+] Checking to see if the database is connected...");
             try
             {
-                using (SqlConnection dbConnection = new SqlConnection())
-                {
-                    //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
-                    dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
+                SqlConnection dbConnection = new SqlConnection();
+               
+                //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
+                dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
 
-                    //Open up connection to database
-                    dbConnection.Open();
+                //Open up connection to database
+                dbConnection.Open();
 
-                    //just for debugging purposes will remove once code is in production - ADU
-                    Console.WriteLine("[+] DB connected!");
+                //just for debugging purposes will remove once code is in production - ADU
+                Console.WriteLine("[+] DB connected!");
 
-                    //return true; 
-                    //more debugging here to see if I can query items on that database.
+                //return true; 
+                //more debugging here to see if I can query items on that database.
 
-                    // The actual command should come from the login or register function rather than being hard coded here - JA
-                    // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
-                    string sqlCommand = ("Select * FROM [User]");
-                    SqlCommand command = new SqlCommand(sqlCommand, dbConnection); // Need to verify how this will work....
+                // The actual command should come from the login or register function rather than being hard coded here - JA
+                // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
+                //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
 
-                    //just for debugging purposes to read queried response will modify code - ADU
-                    using (SqlDataReader reader = command.ExecuteReader())
-                    {
-                        // while there is another record present
-                        while (reader.Read())
-                        {
-                            // write the data on to the screen
-                            Console.WriteLine(reader.NextResult());
-                        }
-                    }
-                }
+                SqlCommand command = new SqlCommand(SqlCommandCreds, dbConnection); // Need to verify how this will work....
+                
             }
             catch (Exception error)
             {
@@ -474,10 +461,26 @@ namespace ChatServer
             string userName = creds[1];
             string userPassword = creds[2];
 
+            //need userPassword to be hashed before we check against the db - ADU
+            //hashedPassword = someHashfunction(userPassword); - ADU
+            string sqlUserCommand = "Select * FROM [User] WHERE username ="+userName;
+            string sqlPassCommand = "Select * FROM [User] WHERE userPassword ="+userPassword;
+
+            if (ConnectToDB(sqlUserCommand) && ConnectToDB(sqlPassCommand))
+            {
+                Console.WriteLine("Username and password verified");
+                return 1;
+            }
+            else
+            {
+                Console.WriteLine("Username and password combo is bad");
+                return 2;
+            }
+
             // If credentials matched and auth
             // was successful, then return true
             // otherwise return error code
-            return 1;
+            // return 1;
         }// End of Login function
 
         //*******************************************************************************************
