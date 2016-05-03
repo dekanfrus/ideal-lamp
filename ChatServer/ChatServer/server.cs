@@ -211,7 +211,11 @@ namespace ChatServer
 
                     //return true; 
                     //more debugging here to see if I can query items on that database.
-                    SqlCommand command = new SqlCommand("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='ChatServer' ", dbConnection); // Need to verify how this will work....
+
+                    // The actual command should come from the login or register function rather than being hard coded here - JA
+                    // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
+                    string sqlCommand = ("Select * FROM [User]");
+                    SqlCommand command = new SqlCommand(sqlCommand, dbConnection); // Need to verify how this will work....
 
                     //just for debugging purposes to read queried response will modify code - ADU
                     using (SqlDataReader reader = command.ExecuteReader())
