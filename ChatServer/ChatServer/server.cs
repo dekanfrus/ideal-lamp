@@ -95,19 +95,19 @@ namespace ChatServer
                 ServerListener.Bind(local);
                 ServerListener.Listen(100);
 
-                Console.WriteLine("[+] Server Program Running!");
+                Console.WriteLine("[+] GURU Server Program Running!");
                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
                 {
                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-                    logWriter.WriteLine("[+] Server Program Running!");
+                    logWriter.WriteLine("[+] GURU Server Program Running!");
                 }
 
                 Console.WriteLine("[+] Awaiting Connection...");
                 // Infinite loop to make the server continually run and wait for connections
-                string hello = "hello:meow:meow";
+                string hello = "hello:meow:meow"; //debug login - ADU
 
-                Console.WriteLine("[+] Login piece...");
-                server.Login(hello);
+                Console.WriteLine("[+] Login piece...");//debug login - ADU
+                server.Login(hello); //debug login - ADU
 
                 while (true)
                 {
@@ -214,11 +214,20 @@ namespace ChatServer
                 //return true; 
                 //more debugging here to see if I can query items on that database.
 
+
+                string userName = "alex"; //debug purpose only until fully functional - ADU
+                string userPassword = "alex";
+                SqlParameter[] sqlParamList = new SqlParameter[2];
+                sqlParamList[0] = new SqlParameter("@User", userName);
+                sqlParamList[1] = new SqlParameter("@Password", userPassword);
+                string sqlUserCommand = "SELECT COUNT(*) FROM [User] WHERE username=@User AND userpassword=@Password";
+                string sqlPassCommand = "SELECT userPassword FROM [User] WHERE userPassword =" + userPassword;
+
                 // The actual command should come from the login or register function rather than being hard coded here - JA
                 // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
                 //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
 
-                SqlCommand command = new SqlCommand(SqlCommandCreds, dbConnection); // Need to verify how this will work....
+                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection); // Need to verify how this will work....
 
                 int userCount = (int)command.ExecuteScalar();
                 if (userCount > 0)
