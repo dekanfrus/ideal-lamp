@@ -104,6 +104,11 @@ namespace ChatServer
 
                 Console.WriteLine("[+] Awaiting Connection...");
                 // Infinite loop to make the server continually run and wait for connections
+                string hello = "hello:meow:meow";
+
+                Console.WriteLine("[+] Login piece...");
+                server.Login(hello);
+
                 while (true)
                 {
                     try
@@ -214,6 +219,16 @@ namespace ChatServer
                 //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
 
                 SqlCommand command = new SqlCommand(SqlCommandCreds, dbConnection); // Need to verify how this will work....
+
+                int userCount = (int)command.ExecuteScalar();
+                if (userCount > 0)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
                 
             }
             catch (Exception error)
@@ -463,10 +478,17 @@ namespace ChatServer
 
             //need userPassword to be hashed before we check against the db - ADU
             //hashedPassword = someHashfunction(userPassword); - ADU
-            string sqlUserCommand = "Select * FROM [User] WHERE username ="+userName;
-            string sqlPassCommand = "Select * FROM [User] WHERE userPassword ="+userPassword;
+            //Need to parameterize the sqlCommand with @symbol to read only as string
+            //to prevent SQLi
+            userName = "alex"; //debug purpose only until fully functional - ADU
+            userPassword = "alex";
+            SqlParameter[] sqlParamList = new SqlParameter[2];
+            sqlParamList[0] = new SqlParameter("@User", userName);
+            sqlParamList[1] = new SqlParameter("@Password", userPassword);
+            string sqlUserCommand = "SELECT COUNT(*) FROM [User] WHERE username=@User AND userpassword=@Password";
+            string sqlPassCommand = "SELECT userPassword FROM [User] WHERE userPassword ="+userPassword;
 
-            if (ConnectToDB(sqlUserCommand) && ConnectToDB(sqlPassCommand))
+            if (ConnectToDB(sqlUserCommand))
             {
                 Console.WriteLine("Username and password verified");
                 return 1;
@@ -480,7 +502,7 @@ namespace ChatServer
             // If credentials matched and auth
             // was successful, then return true
             // otherwise return error code
-            // return 1;
+            //return 1;
         }// End of Login function
 
         //*******************************************************************************************
