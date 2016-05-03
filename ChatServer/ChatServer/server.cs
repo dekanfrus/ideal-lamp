@@ -193,10 +193,9 @@ namespace ChatServer
         //***************************************************************************************
         public static bool ConnectToDB()
         {
-
             //Check to see if the server can initiate a connection to the database server - ADU
-            Console.WriteLine("[+] Checking to see if the database is connected...");
-            try
+            Console.WriteLine("[+] Checking to see if the database can connect");
+            try //only using this portion to see how to create sql queries on passwords
             {
                 using (SqlConnection dbConnection = new SqlConnection())
                 {
@@ -211,28 +210,27 @@ namespace ChatServer
 
                     //return true; 
                     //more debugging here to see if I can query items on that database.
-                    SqlCommand command = new SqlCommand("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='ChatServer' ", dbConnection); // Need to verify how this will work....
+                    SqlCommand command = new SqlCommand("SELECT * FROM information_schema.tables", dbConnection); // Need to verify how this will work....
 
+                    
                     //just for debugging purposes to read queried response will modify code - ADU
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
-                        // while there is another record present
+                        Console.WriteLine("FirstColumn\tSecond Column\t\tThird Column\t\tFourth Column\t");
+                        int count = 0;
                         while (reader.Read())
                         {
-                            // write the data on to the screen
-                            Console.WriteLine(reader.NextResult());
+                            Console.WriteLine(reader[count++]);
                         }
                     }
                 }
             }
             catch (Exception error)
             {
-                Console.WriteLine("[+] DB did not connect!");
                 Console.WriteLine(error.ToString());
-                return false; //database did not connect successfully cannot authenticate users
+                return false; //database did not connect successfully....cannot authenticate users
             }
-
-
+                        
             return true;
         }// End of ConnectToDB Function
 
@@ -469,6 +467,8 @@ namespace ChatServer
 
             string userName = creds[1];
             string userPassword = creds[2];
+            
+            //string PasswordHashed = CreatePasswordHash(userPassword, salt);
 
             // If credentials matched and auth
             // was successful, then return true
@@ -495,7 +495,7 @@ namespace ChatServer
             // If signup was successful,
             // return true
             // Otherwise return error code
-
+            
             return 1;
         }
 
@@ -568,6 +568,20 @@ namespace ChatServer
             return System.Text.Encoding.UTF8.GetString(MessageBytes);
         }
 
+        //*******************************************************************************************
+        // Function Name: DecryptData                                                              **
+        // Description:  
+        //               
+        //                                                                                         **
+        //*******************************************************************************************
+        /*
+        private static string CreatePasswordHash(string userPassword, string salt)
+        {
+            string SaltAndPassword = String.Concat(userPassword, salt);
+            string hashedPassword = FormsAuthentication.HashPasswordForStoringInConfigFile(SaltAndPassword, "SHA1");
+            hashedPassword = String.Concat(hashedPassword, salt);
+            return hashedPassword;
+        }*/
         //*******************************************************************************************
         // Function Name: Main                                                                     **
         // Description:  Main function of the server program, however it just dynamically creates  **
