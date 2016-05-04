@@ -104,7 +104,7 @@ namespace ChatServer
 
                 Console.WriteLine("[+] Awaiting Connection...");
                 // Infinite loop to make the server continually run and wait for connections
-                string hello = "hello:meow:meow"; //debug login - ADU
+                string hello = "hello:alex:alex"; //debug login - ADU
 
                 Console.WriteLine("[+] Login piece...");//debug login - ADU
                 server.Login(hello); //debug login - ADU
@@ -188,12 +188,12 @@ namespace ChatServer
         //***************************************************************************************
         // Function Name: ConnectToDB
         // Description: 
-        // Attempts to establish a connection with the EC2 MSSQL database 
+        // Attempts to establish a connection with the EC2 MSSQL database
         // 
         //
         //
         //***************************************************************************************
-        public static bool ConnectToDB(string SqlCommandCreds)
+        public static bool ConnectToDB(string userName, string userPassword)
         {
 
             //Check to see if the server can initiate a connection to the database server - ADU
@@ -215,40 +215,39 @@ namespace ChatServer
                 //more debugging here to see if I can query items on that database.
 
 
-                string userName = "alex"; //debug purpose only until fully functional - ADU
-                string userPassword = "alex";
-                SqlParameter[] sqlParamList = new SqlParameter[2];
-                sqlParamList[0] = new SqlParameter("@User", userName);
-                sqlParamList[1] = new SqlParameter("@Password", userPassword);
                 string sqlUserCommand = "SELECT COUNT(*) FROM [User] WHERE username=@User AND userpassword=@Password";
-                string sqlPassCommand = "SELECT userPassword FROM [User] WHERE userPassword =" + userPassword;
+                //string sqlPassCommand = "SELECT userPassword FROM [User] WHERE userPassword =" + userPassword;
 
                 // The actual command should come from the login or register function rather than being hard coded here - JA
                 // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
                 //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
 
                 SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection); // Need to verify how this will work....
+                
+                command.Parameters.Add("@User", SqlDbType.VarChar);
+                command.Parameters["@User"].Value = userName;
 
+                command.Parameters.Add("@Password", SqlDbType.VarChar);
+                command.Parameters["@Password"].Value = userPassword;
                 int userCount = (int)command.ExecuteScalar();
+
                 if (userCount > 0)
                 {
+                    dbConnection.Close();
                     return true;
                 }
                 else
                 {
+                    dbConnection.Close();
                     return false;
                 }
                 
             }
             catch (Exception error)
             {
-                Console.WriteLine("[+] DB did not connect!");
                 Console.WriteLine(error.ToString());
-                return false; //database did not connect successfully cannot authenticate users
+                return false;
             }
-
-
-            return true;
         }// End of ConnectToDB Function
 
         //***************************************************************************************
@@ -489,15 +488,8 @@ namespace ChatServer
             //hashedPassword = someHashfunction(userPassword); - ADU
             //Need to parameterize the sqlCommand with @symbol to read only as string
             //to prevent SQLi
-            userName = "alex"; //debug purpose only until fully functional - ADU
-            userPassword = "alex";
-            SqlParameter[] sqlParamList = new SqlParameter[2];
-            sqlParamList[0] = new SqlParameter("@User", userName);
-            sqlParamList[1] = new SqlParameter("@Password", userPassword);
-            string sqlUserCommand = "SELECT COUNT(*) FROM [User] WHERE username=@User AND userpassword=@Password";
-            string sqlPassCommand = "SELECT userPassword FROM [User] WHERE userPassword ="+userPassword;
 
-            if (ConnectToDB(sqlUserCommand))
+            if (ConnectToDB(userName, userPassword))
             {
                 Console.WriteLine("Username and password verified");
                 return 1;
@@ -511,7 +503,6 @@ namespace ChatServer
             // If credentials matched and auth
             // was successful, then return true
             // otherwise return error code
-            //return 1;
         }// End of Login function
 
         //*******************************************************************************************
