@@ -302,7 +302,7 @@ namespace ChatServer
                     {
                         // Call Login function to query the database and verify credentials
                         int success = Login(clientMessage);
-                        byte[] clientReturnInt;
+                        string clientReturnInt;
                         // Depending on authentication results, log and proceed
                         switch (success)
                         {
@@ -313,7 +313,7 @@ namespace ChatServer
                                     logWriter.WriteLine("[+] Login Successful!");
                                 }
                                 Console.WriteLine("[+] Login Successful!");
-                                clientReturnInt = Encoding.ASCII.GetBytes("1300");
+                                clientReturnInt = Convert.ToBase64String(Encoding.ASCII.GetBytes("1300"));
                                 clientHandler.Send(clientReturnInt);
                                 break;
                             case 2:
