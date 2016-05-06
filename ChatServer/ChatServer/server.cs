@@ -224,7 +224,7 @@ namespace ChatServer
                 string sqlUserCommand = "SELECT COUNT(*) FROM [User] WHERE username=@User AND userpassword=@Password";
 
 
-                Console.WriteLine("Hashed User Pass: " + hashRetrievedUserPass);
+                //Console.WriteLine("Hashed User Pass: " + hashRetrievedUserPass); - Debugging purposes only - ADU
                 // The actual command should come from the login or register function rather than being hard coded here - JA
                 // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
                 //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
