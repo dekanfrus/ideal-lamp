@@ -5,11 +5,31 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatServer1"
         mc:Ignorable="d"
-        Title="Welcome to J²A Chat Services" Height="299.02" Width="333.824" HorizontalAlignment="Center" ResizeMode="CanMinimize" Background="#FF1D368B" WindowStartupLocation="CenterScreen">
+        Title="Guru Chat" Height="299.02" Width="333.824" HorizontalAlignment="Center" Background="#FF1D368B" WindowStartupLocation="CenterScreen">
     
     <Grid>
-        <Button x:Name="Log_In" Click="Login_Click"  Content="Log In" HorizontalAlignment="Left" Margin="118,69,0,0" Width="75" VerticalAlignment="Top"/>
-        <Button x:Name="Register" Click="Register_Click" Content="Register" HorizontalAlignment="Left" Margin="118,133,0,0" Width="75" VerticalAlignment="Top"/>
-
-    </Grid>
+        <!--<Grid.Background>
+            <ImageBrush ImageSource="C:\Users\Jeff\Source\Repos\ideal-lamp\ChatServer\love-guru.jpg"></ImageBrush>
+        </Grid.Background>-->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <!--<RowDefinition Height="Auto" />-->
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <!--<Button x:Name="Log_In" Click="Login_Click"  Content="Log In" HorizontalAlignment="Left" Margin="132,78,0,0" Width="75" VerticalAlignment="Top" />-->
+        <Button x:Name="Log_In" Click="Login_Click"  Content="Log In" HorizontalAlignment="Left" Width="65" VerticalAlignment="Top" Grid.Row="2" Grid.Column="2"/>
+        <!--<Button x:Name="Register" Click="Register_Click" Content="Register" HorizontalAlignment="Left" Margin="132,105,0,0" Width="75" VerticalAlignment="Top"/>-->
+        <Button x:Name="Register" Click="Register_Click" Content="Register" HorizontalAlignment="Left" Width="65" VerticalAlignment="Bottom" Grid.Row="2" Grid.Column="2"/>
+        </Grid>
 </Window>

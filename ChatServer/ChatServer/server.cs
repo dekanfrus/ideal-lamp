@@ -67,7 +67,7 @@ namespace ChatServer
         // Salt and Initialization Vector values for encryption of data
         private static byte[] Salt = {2, 123,  61, 217, 205, 133, 176, 171, 164, 248, 215, 129, 232, 210, 145, 56, 
                                       45, 133,  55, 137,  95, 174, 245, 179, 205, 140, 190, 215, 110, 122, 169, 95 };
-        private static byte[] IV = {9,  90,  56,  18, 127, 245, 101, 112,  72, 133, 248, 224,  73,  12,  96,  24, };
+        private static byte[] IV = { 9, 90, 56, 18, 127, 245, 101, 112, 72, 133, 248, 224, 73, 12, 96, 24, };
 
         private static ICryptoTransform Encryptor, Decryptor;
         private static System.Text.UTF8Encoding Encoder;
@@ -104,7 +104,7 @@ namespace ChatServer
 
                 Console.WriteLine("[+] Awaiting Connection...");
                 // Infinite loop to make the server continually run and wait for connections
-                
+
                 while (true)
                 {
                     try
@@ -222,7 +222,7 @@ namespace ChatServer
 
                 //The sql input to check if records exist
                 string sqlUserCommand = "SELECT COUNT(*) FROM [User] WHERE username=@User AND userpassword=@Password";
-                
+
 
                 Console.WriteLine("Hashed User Pass: " + hashRetrievedUserPass);
                 // The actual command should come from the login or register function rather than being hard coded here - JA
@@ -617,8 +617,44 @@ namespace ChatServer
         //*******************************************************************************************
         public static string DecryptData(string message)
         {
-            Byte[] MessageBytes = Encoding.UTF8.GetBytes(message);
-            return System.Text.Encoding.UTF8.GetString(MessageBytes);
+            Byte[] EncryptedMessageBytes = Encoding.UTF8.GetBytes(message);
+
+            MemoryStream encryptedMessage = new MemoryStream();
+            CryptoStream decryptedMessage = new CryptoStream(encryptedMessage, Decryptor, CryptoStreamMode.Write);
+
+            try
+            {
+                decryptedMessage.Write(EncryptedMessageBytes, 0, EncryptedMessageBytes.Length);
+                decryptedMessage.FlushFinalBlock();
+
+                encryptedMessage.Position = 0;
+                Byte[] DecryptedMessageBytes = new Byte[encryptedMessage.Length];
+
+                encryptedMessage.Read(DecryptedMessageBytes, 0, DecryptedMessageBytes.Length);
+
+                encryptedMessage.Close();
+                decryptedMessage.Close();
+
+                return System.Text.Encoding.UTF8.GetString(DecryptedMessageBytes);
+            }
+            catch (Exception error)
+            {
+                // Basic logging.  Send the error to the console and the server log, then return an empty string
+                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                {
+                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+                    logWriter.Write(error.ToString());
+                }
+                Console.WriteLine(error.ToString());
+                return " ";
+            }
+            finally
+            {
+                encryptedMessage.Close();
+                decryptedMessage.Close();
+            }
+            return " ";
+            
         }
 
         //***************************************************************************************
@@ -650,7 +686,7 @@ namespace ChatServer
                 int saltSize = 25;
                 string userSalt = CreateSalt(saltSize); //randomly generate a salt
                 string passwordHash = CreatePasswordHash(userPassword, userSalt); //send password to be hashed with a salt SHA256
-                
+
                 //Console.WriteLine("Password Hash in register: "+ passwordHash); - debugging purposes only - ADU
 
                 //This part checks to see if there is more than one user account with that same name

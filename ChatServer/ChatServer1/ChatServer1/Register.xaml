@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatServer1"
         mc:Ignorable="d"
-        Title="J²A Chat Services Registration" Height="300" Width="305.881" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen">
+        Title="Guru Chat" Height="300" Width="305.881" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen">
     <Grid Background="#FF1D368B">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="87*"/>
