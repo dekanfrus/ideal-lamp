@@ -185,7 +185,7 @@ namespace ChatServer
         // Function Name: ConnectToDB
         // Description: 
         // Attempts to establish a connection with the EC2 MSSQL database
-        // 
+        // Used with the login function. Checks to see user exists and that password matches
         //
         //
         //***************************************************************************************
@@ -236,11 +236,12 @@ namespace ChatServer
                 command.Parameters["@User"].Value = userName;
 
                 command.Parameters.Add("@Password", SqlDbType.VarChar);
-                command.Parameters["@Password"].Value = hashRetrievedUserPass;
+                command.Parameters["@Password"].Value = hashRetrievedUserPass; //uses the hashed password
 
+                //Check to see if user exists
                 int userCount = (int)command.ExecuteScalar();
 
-                if (userCount > 0)
+                if (userCount > 0)//user exists info matches
                 {
                     dbConnection.Close();
                     return true;
@@ -248,7 +249,7 @@ namespace ChatServer
                 else
                 {
                     dbConnection.Close();
-                    return false;
+                    return false;//user does not exist info does not match
                 }
                 
             }
@@ -503,11 +504,7 @@ namespace ChatServer
 
             string userName = creds[1];
             string userPassword = creds[2];
-
-            //Need to parameterize the sqlCommand with @symbol to read only as string
-            //to prevent SQLi
-
-            
+                        
             if (ConnectToDB(userName, userPassword))
             {
                 //Console.WriteLine("Username and password verified"); - For debugging if you need to see if it's being authenticated on server side
@@ -527,8 +524,8 @@ namespace ChatServer
         //*******************************************************************************************
         // Function Name: Register                                                                 **
         // Description:  
-        //               
-        //                                                                                         **
+        // Takes in the user registration info and split it up. Send to overloaded ConnectToDB              
+        // result is then sent back to the calling function                                        **
         //*******************************************************************************************
         public static int Register(string RegisterInfo)
         {
@@ -540,7 +537,7 @@ namespace ChatServer
             string userFirstName = creds[4];
             string userLastName = creds[5];
             
-            int result;
+            int result;//to store if the result passed or not
 
             result = ConnectToDB(userName, userPassword, userEmail, userFirstName, userLastName);
 
@@ -704,19 +701,19 @@ namespace ChatServer
                 if (userCount > 0)
                 {
                     dbConnection.Close();
-                    Console.WriteLine("[+] Username already in use");
+                    //Console.WriteLine("[+] Username already in use"); - debugging only
                     return 3;
                 }
                 else if (!ValidEmailAddr(userMail))
                 {
                     dbConnection.Close();
-                    Console.WriteLine("[+] Bad Email");
+                    //Console.WriteLine("[+] Bad Email"); - debugging only
                     return 2;
                 }
-                else if (userPassword.Length < 3)
+                else if (userPassword.Length < 3) //simple password length checker
                 {
                     dbConnection.Close();
-                    Console.WriteLine("[+] Bad password length");
+                    //Console.WriteLine("[+] Bad password length"); - debugging only
                     return 4;
                 }
 
@@ -727,6 +724,7 @@ namespace ChatServer
                 cmd.CommandText = "INSERT INTO [User] (username, userpassword, userSalt, userEmail, UserFirstName, UserLastName) VALUES ('" + userName + "','" + passwordHash + "','" + userSalt + "','" + userMail + "','" +
                 userFirst + "','" + userLast + "')";
 
+                //Updates info in database
                 cmd.Connection = dbConnection;
                 cmd.ExecuteNonQuery();
                 
@@ -736,7 +734,7 @@ namespace ChatServer
             catch (Exception error)
             {
                 Console.WriteLine(error.ToString());
-                return -2;
+                return -2; //random failure int
             }
             finally
             {
@@ -747,18 +745,21 @@ namespace ChatServer
         //***************************************************************************************
         // Function Name: ValidEmailAddr
         // Description: 
-        // Does some simple checking to verify if email address is valid or not. 
+        // Does some simple checking to verify if email address format is valid or not. 
         // 
         //***************************************************************************************
         public static bool ValidEmailAddr(string userEmail)
         {
             try
             {
-                var emailAddr = new System.Net.Mail.MailAddress(userEmail);
+                //Simple check to see if email string can be added to the object. 
+                //if successful return true
+                var emailAddr = new System.Net.Mail.MailAddress(userEmail); 
                 return emailAddr.Address == userEmail;
             }
             catch
             {
+                //return false if email format is not valid
                 return false;
             }
         }// End of IsValidEmail
@@ -801,7 +802,7 @@ namespace ChatServer
             //string which will carry the hashed password
             string hashedPassword = String.Empty;
 
-            //does some hashing stuff
+            //Cool hashing for each byte 
             byte[] crypto = crypt.ComputeHash(Encoding.ASCII.GetBytes(userPassword), 0, Encoding.ASCII.GetByteCount(userPassword));
 
             //for each byte add it to the hashedPassword string
