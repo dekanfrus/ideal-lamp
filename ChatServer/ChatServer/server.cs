@@ -104,14 +104,14 @@ namespace ChatServer
 
                 Console.WriteLine("[+] Awaiting Connection...");
                 // Infinite loop to make the server continually run and wait for connections
-                string hello = "hello:alex:alex"; //debug login - ADU
+                /*string hello = "hello:alex:alex"; //debug login - ADU
 
                 Console.WriteLine("[+] Login piece...");//debug login - ADU
                 server.Login(hello); //debug login - ADU
 
                 string meow = "hello:alex:alex:alexitseru@gmail.com:alex:uresti"; //debug register - ADU
                 Console.WriteLine("[+] Register piece...");//debug register - ADU
-                server.Register(meow);
+                server.Register(meow);*/
 
                 while (true)
                 {
@@ -304,6 +304,8 @@ namespace ChatServer
                                     logWriter.WriteLine("[+] Login Successful!");
                                 }
                                 Console.WriteLine("[+] Login Successful!");
+                                byte[] buffer = Encoding.ASCII.GetBytes("1300");
+                                clientHandler.Send(buffer);
                                 break;
                             case 2:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
