@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatServer1"
         mc:Ignorable="d"
-        Title="J²A Chat Services Login" Height="300" Width="300" Background="#FF1D368B" WindowStartupLocation="CenterScreen">
+        Title="Guru Chat " Height="300" Width="300" Background="#FF1D368B" WindowStartupLocation="CenterScreen">
     
     <Grid>
         <Label x:Name="user_name_label" Content="User Name:" HorizontalAlignment="Left" Margin="35,55,0,0" VerticalAlignment="Top"/>
