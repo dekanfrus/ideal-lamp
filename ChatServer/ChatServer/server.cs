@@ -547,53 +547,57 @@ namespace ChatServer
         //*******************************************************************************************
         public static string EncryptData(string message)
         {
-            // Create a new object with the RM (AES) algorithm
-            RijndaelManaged AESEncrypt = new RijndaelManaged();
 
-            // Populate the encryptor/decryptor with the salt and initialization vector
-            Encryptor = AESEncrypt.CreateEncryptor(Salt, IV);
-            Decryptor = AESEncrypt.CreateDecryptor(Salt, IV);
+            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
 
-            // Specify the type of encoding we want to use
-            Encoder = new System.Text.UTF8Encoding();
+            return eMessage;
 
-            try
-            {
-                // Convert the message to a byte array
-                Byte[] MessageBytes = Encoding.UTF8.GetBytes(message);
+            //// Create a new object with the RM (AES) algorithm
+            //RijndaelManaged AESEncrypt = new RijndaelManaged();
 
-                // Create a memory stream object to stream the message to the crypto stream object
-                // The Crypto stream object requires a stream object - cannot use a byte array directly
-                MemoryStream mStream = new MemoryStream();
-                CryptoStream cStream = new CryptoStream(mStream, Encryptor, CryptoStreamMode.Write);
+            //// Populate the encryptor/decryptor with the salt and initialization vector
+            //Encryptor = AESEncrypt.CreateEncryptor(Salt, IV);
 
-                // Write the message to the Crypto Stream object encrypting the data
-                cStream.Write(MessageBytes, 0, MessageBytes.Length);
-                cStream.FlushFinalBlock();
+            //// Specify the type of encoding we want to use
+            //// Encoder = new System.Text.UTF8Encoding();
 
-                // Read the encrypted data back from the Crypto Stream object
-                mStream.Position = 0;
-                byte[] EncryptedMessage = new byte[mStream.Length];
-                mStream.Read(EncryptedMessage, 0, EncryptedMessage.Length);
+            //try
+            //{
+            //    // Convert the message to a byte array
+            //    Byte[] MessageBytes = Convert.FromBase64String(message);
 
-                // Close the streams because it's a good idea
-                cStream.Close();
-                mStream.Close();
+            //    // Create a memory stream object to stream the message to the crypto stream object
+            //    // The Crypto stream object requires a stream object - cannot use a byte array directly
+            //    MemoryStream mStream = new MemoryStream();
+            //    CryptoStream cStream = new CryptoStream(mStream, Encryptor, CryptoStreamMode.Write);
 
-                // Return the encrypted string back to the calling function
-                return System.Text.Encoding.UTF8.GetString(EncryptedMessage);
-            }
-            catch (Exception error)
-            {
-                // Basic logging.  Send the error to the console and the server log, then return an empty string
-                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-                {
-                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-                    logWriter.Write(error.ToString());
-                }
-                Console.WriteLine(error.ToString());
-                return " ";
-            }
+            //    // Write the message to the Crypto Stream object encrypting the data
+            //    cStream.Write(MessageBytes, 0, MessageBytes.Length);
+            //    cStream.FlushFinalBlock();
+
+            //    // Read the encrypted data back from the Crypto Stream object
+            //    mStream.Position = 0;
+            //    byte[] EncryptedMessage = new byte[mStream.Length];
+            //    mStream.Read(EncryptedMessage, 0, EncryptedMessage.Length);
+
+            //    // Close the streams because it's a good idea
+            //    cStream.Close();
+            //    mStream.Close();
+
+            //    // Return the encrypted string back to the calling function
+            //    return Convert.ToBase64String(EncryptedMessage);
+            //}
+            //catch (Exception error)
+            //{
+            //    // Basic logging.  Send the error to the console and the server log, then return an empty string
+            //    using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+            //    {
+            //        logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+            //        logWriter.Write(error.ToString());
+            //    }
+            //    Console.WriteLine(error.ToString());
+            //    return " ";
+            //}
         }
 
         //*******************************************************************************************
@@ -604,44 +608,50 @@ namespace ChatServer
         //*******************************************************************************************
         public static string DecryptData(string message)
         {
-            Byte[] EncryptedMessageBytes = Encoding.UTF8.GetBytes(message);
+            string dMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(message));
 
-            MemoryStream encryptedMessage = new MemoryStream();
-            CryptoStream decryptedMessage = new CryptoStream(encryptedMessage, Decryptor, CryptoStreamMode.Write);
+            return dMessage;
+            //// Create a new object with the RM (AES) algorithm
+            //RijndaelManaged AESEncrypt = new RijndaelManaged();
 
-            try
-            {
-                decryptedMessage.Write(EncryptedMessageBytes, 0, EncryptedMessageBytes.Length);
-                decryptedMessage.FlushFinalBlock();
+            //// Populate the encryptor/decryptor with the salt and initialization vector
+            //Decryptor = AESEncrypt.CreateDecryptor(Salt, IV);
 
-                encryptedMessage.Position = 0;
-                Byte[] DecryptedMessageBytes = new Byte[encryptedMessage.Length];
+            //// Specify the type of encoding we want to use
+            //Encoder = new System.Text.UTF8Encoding();
 
-                encryptedMessage.Read(DecryptedMessageBytes, 0, DecryptedMessageBytes.Length);
+            //try
+            //{
+            //    Byte[] EncryptedMessageBytes = Encoding.UTF8.GetBytes(message);
 
-                encryptedMessage.Close();
-                decryptedMessage.Close();
+            //    MemoryStream encryptedMessage = new MemoryStream();
+            //    CryptoStream decryptedMessage = new CryptoStream(encryptedMessage, Decryptor, CryptoStreamMode.Write);
 
-                return System.Text.Encoding.UTF8.GetString(DecryptedMessageBytes);
-            }
-            catch (Exception error)
-            {
-                // Basic logging.  Send the error to the console and the server log, then return an empty string
-                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-                {
-                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-                    logWriter.Write(error.ToString());
-                }
-                Console.WriteLine(error.ToString());
-                return " ";
-            }
-            finally
-            {
-                encryptedMessage.Close();
-                decryptedMessage.Close();
-            }
-            return " ";
-            
+            //    decryptedMessage.Write(EncryptedMessageBytes, 0, EncryptedMessageBytes.Length);
+            //    //decryptedMessage.FlushFinalBlock();
+
+            //    encryptedMessage.Position = 0;
+            //    Byte[] DecryptedMessageBytes = new Byte[encryptedMessage.Length];
+
+            //    encryptedMessage.Read(DecryptedMessageBytes, 0, DecryptedMessageBytes.Length);
+
+            //    encryptedMessage.Close();
+            //    //decryptedMessage.Close();
+
+            //    return System.Text.Encoding.UTF8.GetString(DecryptedMessageBytes);
+            //}
+            //catch (Exception error)
+            //{
+            //    // Basic logging.  Send the error to the console and the server log, then return an empty string
+            //    using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+            //    {
+            //        logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+            //        logWriter.Write(error.ToString());
+            //    }
+            //    Console.WriteLine(error.ToString());
+            //    return " ";
+            //}
+
         }
 
         //***************************************************************************************
