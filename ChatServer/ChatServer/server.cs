@@ -65,9 +65,9 @@ namespace ChatServer
         public static List<Socket> clientList = new List<Socket>();
 
         // Salt and Initialization Vector values for encryption of data
-        private static byte[] Salt = {2, 123,  61, 217, 205, 133, 176, 171, 164, 248, 215, 129, 232, 210, 145, 56, 
+        private static byte[] Salt = {2, 123,  61, 217, 205, 133, 176, 171, 164, 248, 215, 129, 232, 210, 145, 56,
                                       45, 133,  55, 137,  95, 174, 245, 179, 205, 140, 190, 215, 110, 122, 169, 95 };
-        private static byte[] IV = {9,  90,  56,  18, 127, 245, 101, 112,  72, 133, 248, 224,  73,  12,  96,  24, };
+        private static byte[] IV = { 9, 90, 56, 18, 127, 245, 101, 112, 72, 133, 248, 224, 73, 12, 96, 24, };
 
         private static ICryptoTransform Encryptor, Decryptor;
         private static System.Text.UTF8Encoding Encoder;
@@ -205,7 +205,7 @@ namespace ChatServer
             try
             {
                 SqlConnection dbConnection = new SqlConnection();
-               
+
                 //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
                 dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
 
@@ -227,7 +227,7 @@ namespace ChatServer
                 //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
 
                 SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection); // Need to verify how this will work....
-                
+
                 command.Parameters.Add("@User", SqlDbType.VarChar);
                 command.Parameters["@User"].Value = userName;
 
@@ -245,7 +245,7 @@ namespace ChatServer
                     dbConnection.Close();
                     return false;
                 }
-                
+
             }
             catch (Exception error)
             {
@@ -526,7 +526,7 @@ namespace ChatServer
             string userEmail = creds[3];
             string userFirstName = creds[4];
             string userLastName = creds[5];
-            
+
             int result;
 
             result = ConnectToDB(userName, userPassword, userEmail, userFirstName, userLastName);
@@ -561,7 +561,7 @@ namespace ChatServer
             {
                 // Convert the message to a byte array
                 Byte[] MessageBytes = Encoding.UTF8.GetBytes(message);
-                
+
                 // Create a memory stream object to stream the message to the crypto stream object
                 // The Crypto stream object requires a stream object - cannot use a byte array directly
                 MemoryStream mStream = new MemoryStream();
@@ -604,8 +604,44 @@ namespace ChatServer
         //*******************************************************************************************
         public static string DecryptData(string message)
         {
-            Byte[] MessageBytes = Encoding.UTF8.GetBytes(message);
-            return System.Text.Encoding.UTF8.GetString(MessageBytes);
+            Byte[] EncryptedMessageBytes = Encoding.UTF8.GetBytes(message);
+
+            MemoryStream encryptedMessage = new MemoryStream();
+            CryptoStream decryptedMessage = new CryptoStream(encryptedMessage, Decryptor, CryptoStreamMode.Write);
+
+            try
+            {
+                decryptedMessage.Write(EncryptedMessageBytes, 0, EncryptedMessageBytes.Length);
+                decryptedMessage.FlushFinalBlock();
+
+                encryptedMessage.Position = 0;
+                Byte[] DecryptedMessageBytes = new Byte[encryptedMessage.Length];
+
+                encryptedMessage.Read(DecryptedMessageBytes, 0, DecryptedMessageBytes.Length);
+
+                encryptedMessage.Close();
+                decryptedMessage.Close();
+
+                return System.Text.Encoding.UTF8.GetString(DecryptedMessageBytes);
+            }
+            catch (Exception error)
+            {
+                // Basic logging.  Send the error to the console and the server log, then return an empty string
+                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                {
+                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+                    logWriter.Write(error.ToString());
+                }
+                Console.WriteLine(error.ToString());
+                return " ";
+            }
+            finally
+            {
+                encryptedMessage.Close();
+                decryptedMessage.Close();
+            }
+            return " ";
+            
         }
 
         //***************************************************************************************
