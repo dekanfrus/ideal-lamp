@@ -104,14 +104,6 @@ namespace ChatServer
 
                 Console.WriteLine("[+] Awaiting Connection...");
                 // Infinite loop to make the server continually run and wait for connections
-                /*string hello = "hello:alex:alex"; //debug login - ADU
-
-                Console.WriteLine("[+] Login piece...");//debug login - ADU
-                server.Login(hello); //debug login - ADU
-
-                string meow = "hello:alex:alex:alexitseru@gmail.com:alex:uresti"; //debug register - ADU
-                Console.WriteLine("[+] Register piece...");//debug register - ADU
-                server.Register(meow);*/
 
                 while (true)
                 {
@@ -202,9 +194,11 @@ namespace ChatServer
 
             //Check to see if the server can initiate a connection to the database server - ADU
             Console.WriteLine("[+] Checking to see if the database is connected...");
+
+            SqlConnection dbConnection = new SqlConnection();
+
             try
             {
-                SqlConnection dbConnection = new SqlConnection();
 
                 //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
                 dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
@@ -215,24 +209,35 @@ namespace ChatServer
                 //just for debugging purposes will remove once code is in production - ADU
                 Console.WriteLine("[+] DB connected!");
 
-                //return true; 
-                //more debugging here to see if I can query items on that database.
 
+                //Check to see if we can pull down the salt from the user Salt
+                SqlCommand conn = new SqlCommand("SELECT userSalt FROM [User] WHERE username = @User", dbConnection);
 
+                conn.Parameters.Add("@User", SqlDbType.VarChar);
+                conn.Parameters["@User"].Value = userName;
+                string userSalt = (string)conn.ExecuteScalar();
+
+                //Create a hash and send see if it matches the database
+                string hashRetrievedUserPass = CreatePasswordHash(userPassword, userSalt);
+
+                //The sql input to check if records exist
                 string sqlUserCommand = "SELECT COUNT(*) FROM [User] WHERE username=@User AND userpassword=@Password";
-                //string sqlPassCommand = "SELECT userPassword FROM [User] WHERE userPassword =" + userPassword;
 
+
+                //Console.WriteLine("Hashed User Pass: " + hashRetrievedUserPass); - Debugging purposes only - ADU
                 // The actual command should come from the login or register function rather than being hard coded here - JA
                 // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
                 //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
 
-                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection); // Need to verify how this will work....
+                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection); 
 
+                //Paramterizing SQL input - ADU
                 command.Parameters.Add("@User", SqlDbType.VarChar);
                 command.Parameters["@User"].Value = userName;
 
                 command.Parameters.Add("@Password", SqlDbType.VarChar);
-                command.Parameters["@Password"].Value = userPassword;
+                command.Parameters["@Password"].Value = hashRetrievedUserPass;
+
                 int userCount = (int)command.ExecuteScalar();
 
                 if (userCount > 0)
@@ -251,6 +256,10 @@ namespace ChatServer
             {
                 Console.WriteLine(error.ToString());
                 return false;
+            }
+            finally
+            {
+                dbConnection.Close();
             }
         }// End of ConnectToDB Function
 
@@ -293,7 +302,7 @@ namespace ChatServer
                     {
                         // Call Login function to query the database and verify credentials
                         int success = Login(clientMessage);
-
+                        byte[] clientReturnInt;
                         // Depending on authentication results, log and proceed
                         switch (success)
                         {
@@ -304,8 +313,8 @@ namespace ChatServer
                                     logWriter.WriteLine("[+] Login Successful!");
                                 }
                                 Console.WriteLine("[+] Login Successful!");
-                                byte[] buffer = Encoding.ASCII.GetBytes("1300");
-                                clientHandler.Send(buffer);
+                                clientReturnInt = Encoding.ASCII.GetBytes("1300");
+                                clientHandler.Send(clientReturnInt);
                                 break;
                             case 2:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
@@ -314,6 +323,8 @@ namespace ChatServer
                                     logWriter.WriteLine("[+] Login Failed!  Username/Password combination.");
                                 }
                                 Console.WriteLine("[+] Login Failed!  Username/Password combination.");
+                                clientReturnInt = Encoding.ASCII.GetBytes("1200");
+                                clientHandler.Send(clientReturnInt);
                                 break;
                             default:
                                 break;
@@ -325,6 +336,7 @@ namespace ChatServer
                     {
                         // Call Register function and receive result code
                         int success = Register(clientMessage);
+                        byte[] clientReturnInt;
 
                         // Depending on the results from Register, log and proceed
                         switch (success)
@@ -334,6 +346,8 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Successful!");
+                                    clientReturnInt = Encoding.ASCII.GetBytes("2300");
+                                    clientHandler.Send(clientReturnInt);
                                 }
                                 Console.WriteLine("[+] Registration Successful!");
                                 break;
@@ -490,19 +504,18 @@ namespace ChatServer
             string userName = creds[1];
             string userPassword = creds[2];
 
-            //need userPassword to be hashed before we check against the db - ADU
-            //hashedPassword = someHashfunction(userPassword); - ADU
             //Need to parameterize the sqlCommand with @symbol to read only as string
             //to prevent SQLi
 
+            
             if (ConnectToDB(userName, userPassword))
             {
-                Console.WriteLine("Username and password verified");
+                //Console.WriteLine("Username and password verified"); - For debugging if you need to see if it's being authenticated on server side
                 return 1;
             }
             else
             {
-                Console.WriteLine("Username and password combo is bad");
+                //Console.WriteLine("Username and password combo is bad"); - For debugging if you need to see if it's being authenticated on server side
                 return 2;
             }
 
@@ -598,7 +611,7 @@ namespace ChatServer
             //    Console.WriteLine(error.ToString());
             //    return " ";
             //}
-        }
+                }
 
         //*******************************************************************************************
         // Function Name: DecryptData                                                              **
@@ -651,25 +664,25 @@ namespace ChatServer
             //    Console.WriteLine(error.ToString());
             //    return " ";
             //}
-
+            
         }
 
         //***************************************************************************************
         // Function Name: ConnectToDB
         // Description: 
         // Attempts to establish a connection with the EC2 MSSQL database
-        // 
-        //
-        //
+        // Overloaded method which is used in the registration. 
+        // Passwords are sent to be hashed once they are received.
+        // Small checking of user input is done 
         //***************************************************************************************
         public static int ConnectToDB(string userName, string userPassword, string userMail, string userFirst, string userLast)
         {
 
             //Check to see if the server can initiate a connection to the database server - ADU
             Console.WriteLine("[+] Checking to see if the database is connected...");
+            SqlConnection dbConnection = new SqlConnection();
             try
             {
-                SqlConnection dbConnection = new SqlConnection();
 
                 //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
                 dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
@@ -677,42 +690,28 @@ namespace ChatServer
                 //Open up connection to database
                 dbConnection.Open();
 
-                //just for debugging purposes will remove once code is in production - ADU
-                Console.WriteLine("[+] DB connected!");
-
-                //return true; 
-                //more debugging here to see if I can query items on that database.
-
-
                 string sqlUserCommand = "SELECT COUNT(*) FROM [User] WHERE username=@User";
-                //string sqlPassCommand = "SELECT userPassword FROM [User] WHERE userPassword =" + userPassword;
 
-                // The actual command should come from the login or register function rather than being hard coded here - JA
-                // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
-                //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
+                //Password Hashing Function
+                int saltSize = 25;
+                string userSalt = CreateSalt(saltSize); //randomly generate a salt
+                string passwordHash = CreatePasswordHash(userPassword, userSalt); //send password to be hashed with a salt SHA256
 
-                SqlCommand userCommand = new SqlCommand(sqlUserCommand, dbConnection); // Need to verify how this will work....
+                //Console.WriteLine("Password Hash in register: "+ passwordHash); - debugging purposes only - ADU
+
+                //This part checks to see if there is more than one user account with that same name
+                SqlCommand userCommand = new SqlCommand(sqlUserCommand, dbConnection); 
 
                 userCommand.Parameters.Add("@User", SqlDbType.VarChar);
                 userCommand.Parameters["@User"].Value = userName;
 
-                userCommand.Parameters.Add("@Password", SqlDbType.VarChar);
-                userCommand.Parameters["@Password"].Value = userPassword;
-                int userCount = (int)userCommand.ExecuteScalar();
+                int userCount = (int)userCommand.ExecuteScalar(); // if there is more than one it will increment the value here
 
-
+                //Connect to see if username already exists
                 sqlUserCommand = "SELECT COUNT(*) FROM [User] WHERE username=@User";
 
-                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection); // Need to verify how this will work....
-
-                command.Parameters.Add("@User", SqlDbType.VarChar);
-                command.Parameters["@User"].Value = userName;
-
-                command.Parameters.Add("@Password", SqlDbType.VarChar);
-                command.Parameters["@Password"].Value = userPassword;
-                //int userCount = (int)command.ExecuteScalar();
-
-                if (userCount > 1)//remember to change back to 0
+                //perform some basic checks to see if registration info is correct  
+                if (userCount > 0)
                 {
                     dbConnection.Close();
                     Console.WriteLine("[+] Username already in use");
@@ -727,16 +726,31 @@ namespace ChatServer
                 else if (userPassword.Length < 3)
                 {
                     dbConnection.Close();
-                    Console.WriteLine("[+] Bad password");
+                    Console.WriteLine("[+] Bad password length");
                     return 4;
                 }
 
-                return 1;
+                // Send user info to the chatserver database
+                SqlCommand cmd = new SqlCommand();
+                cmd.CommandType = System.Data.CommandType.Text;
+
+                cmd.CommandText = "INSERT INTO [User] (username, userpassword, userSalt, userEmail, UserFirstName, UserLastName) VALUES ('" + userName + "','" + passwordHash + "','" + userSalt + "','" + userMail + "','" +
+                userFirst + "','" + userLast + "')";
+
+                cmd.Connection = dbConnection;
+                cmd.ExecuteNonQuery();
+                
+                dbConnection.Close();
+                return 1; //success
             }
             catch (Exception error)
             {
                 Console.WriteLine(error.ToString());
                 return -2;
+            }
+            finally
+            {
+                dbConnection.Close();
             }
         }// End of ConnectToDB Function
 
@@ -745,8 +759,6 @@ namespace ChatServer
         // Description: 
         // Does some simple checking to verify if email address is valid or not. 
         // 
-        //
-        //
         //***************************************************************************************
         public static bool ValidEmailAddr(string userEmail)
         {
@@ -760,6 +772,58 @@ namespace ChatServer
                 return false;
             }
         }// End of IsValidEmail
+
+        //***************************************************************************************
+        // Function Name: CreateSalt
+        // Description: 
+        // Creates a randomly generated salt to be used with the user password hash
+        // https://crackstation.net/hashing-security.htm#properhashing
+        //https://msdn.microsoft.com/en-us/library/system.security.cryptography.rngcryptoserviceprovider.aspx
+        //https://msdn.microsoft.com/en-us/library/ff649202.aspx
+        //***************************************************************************************
+        private static string CreateSalt(int size)
+        {
+            // Generate a cryptographic random number using the cryptographic
+            // service provider
+            RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+            byte[] rngSalt = new byte[size];
+            rng.GetBytes(rngSalt);
+
+            // Return a Base64 string representation of the random number
+            return Convert.ToBase64String(rngSalt);
+
+        } //end of CreateSalt
+
+        //***************************************************************************************
+        // Function Name: CreatePasswordHash
+        // Description: 
+        // Hashes the password with a SHA256 hash
+        // 
+        // https://crackstation.net/hashing-security.htm#properhashing
+        // https://msdn.microsoft.com/en-us/library/system.security.cryptography.rngcryptoserviceprovider.aspx
+        // https://msdn.microsoft.com/en-us/library/ff649202.aspx
+        //***************************************************************************************
+        private static string CreatePasswordHash(string userPassword, string salt)
+        {
+            //Hash function 
+            SHA256Managed crypt = new SHA256Managed();
+
+            //string which will carry the hashed password
+            string hashedPassword = String.Empty;
+
+            //does some hashing stuff
+            byte[] crypto = crypt.ComputeHash(Encoding.ASCII.GetBytes(userPassword), 0, Encoding.ASCII.GetByteCount(userPassword));
+
+            //for each byte add it to the hashedPassword string
+            foreach (byte theByte in crypto)
+            {
+                hashedPassword += theByte.ToString("x2");
+            }
+
+            //return the hashedPassword
+            return hashedPassword;
+
+        }//End of CreatePasswordHash
 
         //*******************************************************************************************
         // Function Name: Main                                                                     **
