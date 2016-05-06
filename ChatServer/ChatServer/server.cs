@@ -302,7 +302,7 @@ namespace ChatServer
                     {
                         // Call Login function to query the database and verify credentials
                         int success = Login(clientMessage);
-                        string clientReturnInt;
+                        byte[] clientReturnInt;
                         // Depending on authentication results, log and proceed
                         switch (success)
                         {
@@ -313,7 +313,7 @@ namespace ChatServer
                                     logWriter.WriteLine("[+] Login Successful!");
                                 }
                                 Console.WriteLine("[+] Login Successful!");
-                                clientReturnInt = Convert.ToBase64String(Encoding.ASCII.GetBytes("1300"));
+                                clientReturnInt = Encoding.ASCII.GetBytes("1300");
                                 clientHandler.Send(clientReturnInt);
                                 break;
                             case 2:
@@ -561,7 +561,7 @@ namespace ChatServer
         public static string EncryptData(string message)
         {
 
-            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
+            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.Split('\0').First()));
 
             return eMessage;
 
@@ -621,7 +621,7 @@ namespace ChatServer
         //*******************************************************************************************
         public static string DecryptData(string message)
         {
-            string dMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(message));
+            string dMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(message.Split('\0').First()));
 
             return dMessage;
             //// Create a new object with the RM (AES) algorithm

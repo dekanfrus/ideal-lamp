@@ -108,19 +108,19 @@ namespace ChatServer1
 
         public static string EncryptData(string message)
         {
-            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
+            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.Split('\0').First()));
             return eMessage;
         }
 
         public static string DecryptData(string message)
         {
-            string deMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(message));
+            string deMessage = message.Split('\0').First();
             return deMessage;
         }
         private void login_send_data()
         {
             //string host = Dns.GetHostName();
-            string loginInformation = "100:" + userName + ":" + password;// EncryptData("1000:") + userName + EncryptData(":") + password;
+            string loginInformation = "1000:" + userName + ":" + password;// EncryptData("1000:") + userName + EncryptData(":") + password;
             loginInformation = EncryptData(loginInformation);
             //encrypt loginInformation here
             s.Send(Encoding.UTF8.GetBytes(loginInformation));
@@ -151,8 +151,8 @@ namespace ChatServer1
             s.Receive(buffer);
             string message = Encoding.UTF8.GetString(buffer);
             //decrypt the buffer here
-            DecryptData(message);
-            loginStatus = Int32.Parse(Encoding.UTF8.GetString(buffer));
+            message = DecryptData(message);
+            loginStatus = Int32.Parse(message);
 
             //if status returned from server for log in is good then proceed to chat window
             //else display error message
