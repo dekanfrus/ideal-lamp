@@ -8,9 +8,9 @@
         Title="Guru Chat" Height="299.02" Width="333.824" HorizontalAlignment="Center" Background="#FF1D368B" WindowStartupLocation="CenterScreen">
     
     <Grid>
-        <Grid.Background>
+        <!--<Grid.Background>
             <ImageBrush ImageSource="C:\Users\Jeff\Source\Repos\ideal-lamp\ChatServer\love-guru.jpg"></ImageBrush>
-        </Grid.Background>
+        </Grid.Background>-->
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
