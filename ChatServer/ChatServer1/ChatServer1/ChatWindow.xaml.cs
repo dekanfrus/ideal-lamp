@@ -45,7 +45,20 @@ namespace ChatServer1
             dispatcherTimer.Start();
             Array.Clear(buffer, 0, buffer.Length);
         }
-       
+        public static string EncryptData(string message)
+        {
+            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.Split('\0').First()));
+            return eMessage;
+        }
+
+        public static string DecryptData(string message)
+        {
+            string deMessage = message.Split('\0').First();
+            byte[] dMsg = Convert.FromBase64String(deMessage);
+            deMessage = Encoding.UTF8.GetString(dMsg);
+            return deMessage;
+        }
+
         public void SocketListen(object sender, EventArgs e)
         {
             //just need to add the decrypt function to this
@@ -53,9 +66,12 @@ namespace ChatServer1
             {
                 s.Receive(buffer);
                 //decrypt buffer here
+                messageRecvd = Encoding.UTF8.GetString(buffer);
+                //decrypt the buffer here
+                messageRecvd = DecryptData(messageRecvd);
                 if (buffer[0] != '\0')
                 {
-                    messageRecvd = Encoding.UTF8.GetString(buffer);
+                    //messageRecvd = Encoding.UTF8.GetString(buffer);
                     chatWindowMessage = messageRecvd.Split('\0');
                     if(chatWindowMessage[0].Contains("3000:"))
                     {
@@ -84,6 +100,7 @@ namespace ChatServer1
             //Add the encrypt function call here
             message = UserName + ": " + message + "\n";
             //encrypt message here
+            message = EncryptData(message);
             s.Send(Encoding.UTF8.GetBytes(message));
             chat_window_message_input.Clear();
         }

@@ -6,11 +6,12 @@
         xmlns:local="clr-namespace:ChatServer1"
         mc:Ignorable="d"
         Title="Guru Chat" Height="299.02" Width="333.824" HorizontalAlignment="Center" Background="#FF1D368B" WindowStartupLocation="CenterScreen">
-    
+
     <Grid>
-        <!--<Grid.Background>
-            <ImageBrush ImageSource="C:\Users\Jeff\Source\Repos\ideal-lamp\ChatServer\love-guru.jpg"></ImageBrush>
-        </Grid.Background>-->
+        <Grid.Background>
+            <!--<ImageBrush ImageSource="C:\Users\Jeff\Source\Repos\ideal-lamp\ChatServer\love-guru.jpg"></ImageBrush>-->
+            <ImageBrush ImageSource="C:\Users\Jeff\Source\Repos\ideal-lamp\ChatServer\ChatServer1\ChatServer1\Images\love-guru.jpg" />
+        </Grid.Background>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>

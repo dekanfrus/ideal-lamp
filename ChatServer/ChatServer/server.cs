@@ -221,7 +221,7 @@ namespace ChatServer
                 // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
                 //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
 
-                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection);
+                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection); 
 
                 //Paramterizing SQL input - ADU
                 command.Parameters.Add("@User", SqlDbType.VarChar);
@@ -499,7 +499,7 @@ namespace ChatServer
             //Need to parameterize the sqlCommand with @symbol to read only as string
             //to prevent SQLi
 
-
+            
             if (ConnectToDB(userName, userPassword))
             {
                 //Console.WriteLine("Username and password verified"); - For debugging if you need to see if it's being authenticated on server side
@@ -556,7 +556,7 @@ namespace ChatServer
             string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.Split('\0').First()));
 
             return eMessage;
-        }
+                }
 
         //*******************************************************************************************
         // Function Name: DecryptData                                                              **
@@ -604,7 +604,7 @@ namespace ChatServer
                 //Console.WriteLine("Password Hash in register: "+ passwordHash); - debugging purposes only - ADU
 
                 //This part checks to see if there is more than one user account with that same name
-                SqlCommand userCommand = new SqlCommand(sqlUserCommand, dbConnection);
+                SqlCommand userCommand = new SqlCommand(sqlUserCommand, dbConnection); 
 
                 userCommand.Parameters.Add("@User", SqlDbType.VarChar);
                 userCommand.Parameters["@User"].Value = userName;
@@ -643,7 +643,7 @@ namespace ChatServer
 
                 cmd.Connection = dbConnection;
                 cmd.ExecuteNonQuery();
-
+                
                 dbConnection.Close();
                 return 1; //success
             }
