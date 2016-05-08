@@ -64,14 +64,6 @@ namespace ChatServer
         // Create a list of clients
         public static List<Socket> clientList = new List<Socket>();
 
-        // Salt and Initialization Vector values for encryption of data
-        private static byte[] Salt = {2, 123,  61, 217, 205, 133, 176, 171, 164, 248, 215, 129, 232, 210, 145, 56,
-                                      45, 133,  55, 137,  95, 174, 245, 179, 205, 140, 190, 215, 110, 122, 169, 95 };
-        private static byte[] IV = { 9, 90, 56, 18, 127, 245, 101, 112, 72, 133, 248, 224, 73, 12, 96, 24, };
-
-        private static ICryptoTransform Encryptor, Decryptor;
-        private static System.Text.UTF8Encoding Encoder;
-
         //***************************************************************************************
         // Function Name: server
         // Description:
@@ -229,7 +221,7 @@ namespace ChatServer
                 // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
                 //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
 
-                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection); 
+                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection);
 
                 //Paramterizing SQL input - ADU
                 command.Parameters.Add("@User", SqlDbType.VarChar);
@@ -302,7 +294,7 @@ namespace ChatServer
                     {
                         // Call Login function to query the database and verify credentials
                         int success = Login(clientMessage);
-                        string clientReturnInt;
+                        byte[] clientReturnInt;
                         // Depending on authentication results, log and proceed
                         switch (success)
                         {
@@ -313,7 +305,7 @@ namespace ChatServer
                                     logWriter.WriteLine("[+] Login Successful!");
                                 }
                                 Console.WriteLine("[+] Login Successful!");
-                                clientReturnInt = Convert.ToBase64String(Encoding.ASCII.GetBytes("1300"));
+                                clientReturnInt = Encoding.ASCII.GetBytes("1300");
                                 clientHandler.Send(clientReturnInt);
                                 break;
                             case 2:
@@ -507,7 +499,7 @@ namespace ChatServer
             //Need to parameterize the sqlCommand with @symbol to read only as string
             //to prevent SQLi
 
-            
+
             if (ConnectToDB(userName, userPassword))
             {
                 //Console.WriteLine("Username and password verified"); - For debugging if you need to see if it's being authenticated on server side
@@ -561,57 +553,10 @@ namespace ChatServer
         public static string EncryptData(string message)
         {
 
-            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
+            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.Split('\0').First()));
 
             return eMessage;
-
-            //// Create a new object with the RM (AES) algorithm
-            //RijndaelManaged AESEncrypt = new RijndaelManaged();
-
-            //// Populate the encryptor/decryptor with the salt and initialization vector
-            //Encryptor = AESEncrypt.CreateEncryptor(Salt, IV);
-
-            //// Specify the type of encoding we want to use
-            //// Encoder = new System.Text.UTF8Encoding();
-
-            //try
-            //{
-            //    // Convert the message to a byte array
-            //    Byte[] MessageBytes = Convert.FromBase64String(message);
-
-            //    // Create a memory stream object to stream the message to the crypto stream object
-            //    // The Crypto stream object requires a stream object - cannot use a byte array directly
-            //    MemoryStream mStream = new MemoryStream();
-            //    CryptoStream cStream = new CryptoStream(mStream, Encryptor, CryptoStreamMode.Write);
-
-            //    // Write the message to the Crypto Stream object encrypting the data
-            //    cStream.Write(MessageBytes, 0, MessageBytes.Length);
-            //    cStream.FlushFinalBlock();
-
-            //    // Read the encrypted data back from the Crypto Stream object
-            //    mStream.Position = 0;
-            //    byte[] EncryptedMessage = new byte[mStream.Length];
-            //    mStream.Read(EncryptedMessage, 0, EncryptedMessage.Length);
-
-            //    // Close the streams because it's a good idea
-            //    cStream.Close();
-            //    mStream.Close();
-
-            //    // Return the encrypted string back to the calling function
-            //    return Convert.ToBase64String(EncryptedMessage);
-            //}
-            //catch (Exception error)
-            //{
-            //    // Basic logging.  Send the error to the console and the server log, then return an empty string
-            //    using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-            //    {
-            //        logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-            //        logWriter.Write(error.ToString());
-            //    }
-            //    Console.WriteLine(error.ToString());
-            //    return " ";
-            //}
-                }
+        }
 
         //*******************************************************************************************
         // Function Name: DecryptData                                                              **
@@ -621,50 +566,9 @@ namespace ChatServer
         //*******************************************************************************************
         public static string DecryptData(string message)
         {
-            string dMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(message));
+            string dMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(message.Split('\0').First()));
 
             return dMessage;
-            //// Create a new object with the RM (AES) algorithm
-            //RijndaelManaged AESEncrypt = new RijndaelManaged();
-
-            //// Populate the encryptor/decryptor with the salt and initialization vector
-            //Decryptor = AESEncrypt.CreateDecryptor(Salt, IV);
-
-            //// Specify the type of encoding we want to use
-            //Encoder = new System.Text.UTF8Encoding();
-
-            //try
-            //{
-            //    Byte[] EncryptedMessageBytes = Encoding.UTF8.GetBytes(message);
-
-            //    MemoryStream encryptedMessage = new MemoryStream();
-            //    CryptoStream decryptedMessage = new CryptoStream(encryptedMessage, Decryptor, CryptoStreamMode.Write);
-
-            //    decryptedMessage.Write(EncryptedMessageBytes, 0, EncryptedMessageBytes.Length);
-            //    //decryptedMessage.FlushFinalBlock();
-
-            //    encryptedMessage.Position = 0;
-            //    Byte[] DecryptedMessageBytes = new Byte[encryptedMessage.Length];
-
-            //    encryptedMessage.Read(DecryptedMessageBytes, 0, DecryptedMessageBytes.Length);
-
-            //    encryptedMessage.Close();
-            //    //decryptedMessage.Close();
-
-            //    return System.Text.Encoding.UTF8.GetString(DecryptedMessageBytes);
-            //}
-            //catch (Exception error)
-            //{
-            //    // Basic logging.  Send the error to the console and the server log, then return an empty string
-            //    using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-            //    {
-            //        logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-            //        logWriter.Write(error.ToString());
-            //    }
-            //    Console.WriteLine(error.ToString());
-            //    return " ";
-            //}
-            
         }
 
         //***************************************************************************************
@@ -700,7 +604,7 @@ namespace ChatServer
                 //Console.WriteLine("Password Hash in register: "+ passwordHash); - debugging purposes only - ADU
 
                 //This part checks to see if there is more than one user account with that same name
-                SqlCommand userCommand = new SqlCommand(sqlUserCommand, dbConnection); 
+                SqlCommand userCommand = new SqlCommand(sqlUserCommand, dbConnection);
 
                 userCommand.Parameters.Add("@User", SqlDbType.VarChar);
                 userCommand.Parameters["@User"].Value = userName;
@@ -739,7 +643,7 @@ namespace ChatServer
 
                 cmd.Connection = dbConnection;
                 cmd.ExecuteNonQuery();
-                
+
                 dbConnection.Close();
                 return 1; //success
             }
