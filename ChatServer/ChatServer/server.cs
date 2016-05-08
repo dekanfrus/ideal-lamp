@@ -44,7 +44,6 @@ namespace ChatServer
         public const int BufferSize = 1024;
         public byte[] buffer = new byte[BufferSize];
         public StringBuilder clientString = new StringBuilder();
-        public StringBuilder clientName = new StringBuilder();
     }
 
     //***************************************************************************************
@@ -63,6 +62,9 @@ namespace ChatServer
 
         // Create a list of clients
         public static List<Socket> clientList = new List<Socket>();
+
+        // Create a list to store the names of currently logged in users
+        public static List<string> clientName = new List<string>();
 
         //***************************************************************************************
         // Function Name: server
@@ -92,6 +94,7 @@ namespace ChatServer
                 {
                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                     logWriter.WriteLine("[+] GURU Server Program Running!");
+                    logWriter.Close();
                 }
 
                 Console.WriteLine("[+] Awaiting Connection...");
@@ -102,7 +105,6 @@ namespace ChatServer
                     try
                     {
                         completed.Reset();
-                        //Console.WriteLine("[+] Awaiting Connection...");
 
                         // Connects to any pending client requests
                         ServerListener.BeginAccept(new AsyncCallback(AcceptConnection), ServerListener);
@@ -157,6 +159,7 @@ namespace ChatServer
                 {
                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                     logWriter.WriteLine("[+] Connection Received");
+                    logWriter.Close();
                 }
                 Console.WriteLine("[+] Connection Received");
 
@@ -169,6 +172,12 @@ namespace ChatServer
             catch (Exception error)
             {
                 Console.WriteLine(error.ToString());
+                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                {
+                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+                    logWriter.WriteLine(error.ToString());
+                    logWriter.Close();
+                }
             }
 
         }// End of Accept function
@@ -214,14 +223,7 @@ namespace ChatServer
 
                 //The sql input to check if records exist
                 string sqlUserCommand = "SELECT COUNT(*) FROM [User] WHERE username=@User AND userpassword=@Password";
-
-
-                //Console.WriteLine("Hashed User Pass: " + hashRetrievedUserPass); - Debugging purposes only - ADU
-                // The actual command should come from the login or register function rather than being hard coded here - JA
-                // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
-                //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
-
-                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection); 
+                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection);
 
                 //Paramterizing SQL input - ADU
                 command.Parameters.Add("@User", SqlDbType.VarChar);
@@ -247,6 +249,12 @@ namespace ChatServer
             catch (Exception error)
             {
                 Console.WriteLine(error.ToString());
+                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                {
+                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+                    logWriter.WriteLine(error.ToString());
+                    logWriter.Close();
+                }
                 return false;
             }
             finally
@@ -273,6 +281,8 @@ namespace ChatServer
 
             try
             {
+
+
                 int dataReceived = clientHandler.EndReceive(AsyncResult);
 
                 // Receive data from client
@@ -303,6 +313,7 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Login Successful!");
+                                    logWriter.Close();
                                 }
                                 Console.WriteLine("[+] Login Successful!");
                                 clientReturnInt = Encoding.ASCII.GetBytes("1300");
@@ -313,6 +324,7 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Login Failed!  Username/Password combination.");
+                                    logWriter.Close();
                                 }
                                 Console.WriteLine("[+] Login Failed!  Username/Password combination.");
                                 clientReturnInt = Encoding.ASCII.GetBytes("1200");
@@ -338,6 +350,7 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Successful!");
+                                    logWriter.Close();
                                     clientReturnInt = Encoding.ASCII.GetBytes("2300");
                                     clientHandler.Send(clientReturnInt);
                                 }
@@ -348,6 +361,7 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Failed!  Invalid Email Address.");
+                                    logWriter.Close();
                                 }
                                 Console.WriteLine("[+] Registration Failed!  Invalid Email Address.");
                                 break;
@@ -356,6 +370,7 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Failed! Username already exists.");
+                                    logWriter.Close();
                                 }
                                 Console.WriteLine("[+] Registration Failed! Username already exists.");
                                 break;
@@ -364,6 +379,7 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Failed! Invalid Password.");
+                                    logWriter.Close();
                                 }
                                 Console.WriteLine("[+] Registration Failed! Invalid Password.");
                                 break;
@@ -386,15 +402,20 @@ namespace ChatServer
                         {
                             logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                             logWriter.Write(clientMessage);
+                            logWriter.Close();
                         }
                         BroadcastMessage(clientMessage);
                     }// End of Broadcast Message Hanler
                 }// End of receive data if statement
             }// End of try block
-            catch (Exception error)
-            {
-                Console.WriteLine(error.ToString());
-            }
+            catch (Exception error) { }
+                //Console.WriteLine(error.ToString());
+                //using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                //{
+                //    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+                //    logWriter.WriteLine(error);
+                //    logWriter.Close();
+                //}
 
             // If the client socket is still connected, call the function recursively
             // This is necessary otherwise the thread will exit and the client will no longer be able to send data
@@ -410,6 +431,7 @@ namespace ChatServer
                     {
                         logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                         logWriter.Write(error);
+                        logWriter.Close();
                     }
                     Console.WriteLine(error.ToString());
                 }
@@ -432,12 +454,17 @@ namespace ChatServer
         //*******************************************************************************************
         public static void BroadcastMessage(string recvdMessage)
         {
-            // Output to server console.  Primarily for testing purposes.
-            Console.Write("Plain Text Message: ");
+            // Output the unencrypted message to the console
             Console.Write(recvdMessage);
+
+            // Log the unencrypted message to the ServerLog file
+            using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+            {
+                logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+                logWriter.Write(recvdMessage);
+                logWriter.Close();
+            }
             recvdMessage = EncryptData(recvdMessage);
-            Console.Write("Encrypted Message: ");
-            Console.WriteLine(recvdMessage);
 
             // Convert the message string to a byte array and then send
             // all data to all sockets in the client list (list<socket>)
@@ -456,13 +483,9 @@ namespace ChatServer
         //*******************************************************************************************
         public static void BroadcastUsers()
         {
-            //Convert List<socket> to a string with ":" delimiter and code 3000
-            //Send string to encryptData() function
-            //Once encrypted, broadcast to all sockets
+            //string UserList = "3000:" + clientName;
+            //string EncryptedUserList = EncryptData(UserList);
 
-            //recvdMessage = encryptData(recvdMessage);
-
-            //byte[] data = Encoding.ASCII.GetBytes(clientList);
             //foreach (Socket current in clientList)
             //{
             //    current.BeginSend(data, 0, data.Length, 0, new AsyncCallback(OnBroadcast), current);
@@ -499,10 +522,10 @@ namespace ChatServer
             //Need to parameterize the sqlCommand with @symbol to read only as string
             //to prevent SQLi
 
-            
             if (ConnectToDB(userName, userPassword))
             {
                 //Console.WriteLine("Username and password verified"); - For debugging if you need to see if it's being authenticated on server side
+                clientName.Add(userName);
                 return 1;
             }
             else
@@ -510,10 +533,6 @@ namespace ChatServer
                 //Console.WriteLine("Username and password combo is bad"); - For debugging if you need to see if it's being authenticated on server side
                 return 2;
             }
-
-            // If credentials matched and auth
-            // was successful, then return true
-            // otherwise return error code
         }// End of Login function
 
         //*******************************************************************************************
@@ -556,7 +575,7 @@ namespace ChatServer
             string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.Split('\0').First()));
 
             return eMessage;
-                }
+        }
 
         //*******************************************************************************************
         // Function Name: DecryptData                                                              **
@@ -604,7 +623,7 @@ namespace ChatServer
                 //Console.WriteLine("Password Hash in register: "+ passwordHash); - debugging purposes only - ADU
 
                 //This part checks to see if there is more than one user account with that same name
-                SqlCommand userCommand = new SqlCommand(sqlUserCommand, dbConnection); 
+                SqlCommand userCommand = new SqlCommand(sqlUserCommand, dbConnection);
 
                 userCommand.Parameters.Add("@User", SqlDbType.VarChar);
                 userCommand.Parameters["@User"].Value = userName;
@@ -643,7 +662,7 @@ namespace ChatServer
 
                 cmd.Connection = dbConnection;
                 cmd.ExecuteNonQuery();
-                
+
                 dbConnection.Close();
                 return 1; //success
             }
