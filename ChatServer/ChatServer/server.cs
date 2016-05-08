@@ -29,12 +29,9 @@ using System.Configuration;
 namespace ChatServer
 {
     //***************************************************************************************
-    // Class Name: ClientData
-    // Description:
-    //
-    //
-    //
-    //
+    // Class Name: ClientData                                                              **
+    // Description:  This is a state object that is created each time a new client is      **
+    //               connected.  It stores various data relevant to each specific client.  **
     //***************************************************************************************
     public class ClientData
     {
@@ -46,15 +43,12 @@ namespace ChatServer
         public StringBuilder clientString = new StringBuilder();
     }
 
-    //***************************************************************************************
-    // Class Name: server
-    // Description:
-    //
-    //
-    //
-    //
-    //
-    //***************************************************************************************
+    //************************************************************************************************
+    // Class Name: server                                                                           **
+    // Description:  This is the main class for the program.  It contains all of the functionality  **
+    //               necessary for the program to run, with the only exception being the ClientData **
+    //               state object.                                                                  **
+    //************************************************************************************************
     class server
     {
         // Thread signaler of a particular state (System.Threading)
@@ -281,8 +275,6 @@ namespace ChatServer
 
             try
             {
-
-
                 int dataReceived = clientHandler.EndReceive(AsyncResult);
 
                 // Receive data from client
@@ -387,13 +379,6 @@ namespace ChatServer
                                 break;
                         }
                     } // End of Register handler
-
-                    // Placeholder for additional codes
-                    else if (clientMessage.StartsWith("3"))
-                    {
-                        // Do something else
-                    }
-
                     // Broadcast Message Handler
                     else
                     {
@@ -408,14 +393,8 @@ namespace ChatServer
                     }// End of Broadcast Message Hanler
                 }// End of receive data if statement
             }// End of try block
-            catch (Exception error) { }
-                //Console.WriteLine(error.ToString());
-                //using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-                //{
-                //    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-                //    logWriter.WriteLine(error);
-                //    logWriter.Close();
-                //}
+
+            catch (Exception) { }
 
             // If the client socket is still connected, call the function recursively
             // This is necessary otherwise the thread will exit and the client will no longer be able to send data
@@ -443,7 +422,6 @@ namespace ChatServer
                 // Then send new Users data to the client
                 BroadcastUsers();
             }
-
         }// End of ReceiveData Function
 
         //*******************************************************************************************
@@ -556,11 +534,6 @@ namespace ChatServer
             result = ConnectToDB(userName, userPassword, userEmail, userFirstName, userLastName);
 
             return result;
-            // If signup was successful,
-            // return true
-            // Otherwise return error code
-
-            //return 1;
         }
 
         //*******************************************************************************************
@@ -571,9 +544,7 @@ namespace ChatServer
         //*******************************************************************************************
         public static string EncryptData(string message)
         {
-
             string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.Split('\0').First()));
-
             return eMessage;
         }
 
@@ -586,7 +557,6 @@ namespace ChatServer
         public static string DecryptData(string message)
         {
             string dMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(message.Split('\0').First()));
-
             return dMessage;
         }
 
@@ -600,13 +570,11 @@ namespace ChatServer
         //***************************************************************************************
         public static int ConnectToDB(string userName, string userPassword, string userMail, string userFirst, string userLast)
         {
-
             //Check to see if the server can initiate a connection to the database server - ADU
             Console.WriteLine("[+] Checking to see if the database is connected...");
             SqlConnection dbConnection = new SqlConnection();
             try
             {
-
                 //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
                 dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
 
