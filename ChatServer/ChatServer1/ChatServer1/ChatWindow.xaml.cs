@@ -83,21 +83,21 @@ namespace ChatServer1
                             }
                         }
                     }
-                    else if (chatWindowMessage[0].Contains("3015:"))
-                    {
-                        string[] usernameDel = chatWindowMessage[0].Split(':');
-                        if(usernameDel.First() == "3015")
-                        {
-                            chat_window_users_list.Clear();
-                            for (int i =1; i < usernameArray.Length; i++)
-                            {
-                                if(usernameDel[1] != usernameArray[i])
-                                {
-                                    chat_window_users_list.AppendText(usernameArray[i] + "\n");
-                                }
-                            }
-                        }
-                    }
+                    //else if (chatWindowMessage[0].Contains("3015:"))
+                    //{
+                    //    string[] usernameDel = chatWindowMessage[0].Split(':');
+                    //    if(usernameDel.First() == "3015")
+                    //    {
+                    //        chat_window_users_list.Clear();
+                    //        for (int i =1; i < usernameArray.Length; i++)
+                    //        {
+                    //            if(usernameDel[1] != usernameArray[i])
+                    //            {
+                    //                chat_window_users_list.AppendText(usernameArray[i] + "\n");
+                    //            }
+                    //        }
+                    //    }
+                    //}
                     else
                         chat_window_text_box.AppendText(chatWindowMessage.First());
                     Array.Clear(buffer, 0, buffer.Length);
@@ -127,7 +127,7 @@ namespace ChatServer1
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             //exit code 3015
-            string userLeft = EncryptData("3015:" + UserName);
+            string userLeft = EncryptData(("3015:" + UserName));
             s.Send(Encoding.UTF8.GetBytes(userLeft));
         }
     }
