@@ -32,7 +32,6 @@ namespace ChatServer1
         string UserName;
         string messageRecvd;
         System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
-        
 
         public ChatWindow(Socket x, string name)
         {
@@ -61,7 +60,6 @@ namespace ChatServer1
 
         public void SocketListen(object sender, EventArgs e)
         {
-            //just need to add the decrypt function to this
             try
             {
                 s.Receive(buffer);
@@ -82,6 +80,21 @@ namespace ChatServer1
                             for (int i = 1; i < usernameArray.Length; i++)
                             {
                                 chat_window_users_list.AppendText(usernameArray[i] + "\n");
+                            }
+                        }
+                    }
+                    else if (chatWindowMessage[0].Contains("3015:"))
+                    {
+                        string[] usernameDel = chatWindowMessage[0].Split(':');
+                        if(usernameDel.First() == "3015")
+                        {
+                            chat_window_users_list.Clear();
+                            for (int i =1; i < usernameArray.Length; i++)
+                            {
+                                if(usernameDel[1] != usernameArray[i])
+                                {
+                                    chat_window_users_list.AppendText(usernameArray[i] + "\n");
+                                }
                             }
                         }
                     }
@@ -109,6 +122,13 @@ namespace ChatServer1
         {
             var textBox = sender as TextBox;
             message = textBox.Text;
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            //exit code 3015
+            string userLeft = EncryptData("3015:" + UserName);
+            s.Send(Encoding.UTF8.GetBytes(userLeft));
         }
     }
 }
