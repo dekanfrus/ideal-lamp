@@ -437,16 +437,13 @@ namespace ChatServer
         public static void BroadcastMessage(string recvdMessage)
         {
             // Output the unencrypted message to the console
+            Console.Write("Plaintext Message: ");
             Console.Write(recvdMessage);
 
-            // Log the unencrypted message to the ServerLog file
-            using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-            {
-                logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-                logWriter.Write(recvdMessage);
-                logWriter.Close();
-            }
             recvdMessage = EncryptData(recvdMessage);
+            Console.Write("Encrypted Message: ");
+            Console.WriteLine(recvdMessage);
+
 
             // Convert the message string to a byte array and then send
             // all data to all sockets in the client list (list<socket>)
