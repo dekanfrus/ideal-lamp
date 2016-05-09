@@ -157,9 +157,6 @@ namespace ChatServer
                 }
                 Console.WriteLine("[+] Connection Received");
 
-                // Send updated users list to all clients
-                BroadcastUsers();
-
                 // Begin receiving data from the client
                 clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
             }
@@ -308,8 +305,13 @@ namespace ChatServer
                                     logWriter.Close();
                                 }
                                 Console.WriteLine("[+] Login Successful!");
+
+                                // Sends a message to the client that the login was successful
                                 clientReturnInt = Encoding.ASCII.GetBytes("1300");
                                 clientHandler.Send(clientReturnInt);
+
+                                // Send updated users list to all clients
+                                BroadcastUsers();
                                 break;
                             case 2:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
@@ -379,7 +381,16 @@ namespace ChatServer
                                 break;
                         }
                     } // End of Register handler
-                    // Broadcast Message Handler
+                    else if (clientMessage.StartsWith("3015"))
+                    {
+                        string[] message = clientMessage.Split(':');
+
+                        string removeUser = message[1];
+
+                        clientName.Remove(removeUser);
+
+                        BroadcastUsers();
+                    }
                     else
                     {
                         // Log the message then call the BroadcastMessage function
@@ -414,13 +425,6 @@ namespace ChatServer
                     }
                     Console.WriteLine(error.ToString());
                 }
-            }
-
-            if (!clientHandler.Connected)
-            {
-                // Remove clientState.activeListener from the linked list
-                // Then send new Users data to the client
-                BroadcastUsers();
             }
         }// End of ReceiveData Function
 
@@ -461,13 +465,15 @@ namespace ChatServer
         //*******************************************************************************************
         public static void BroadcastUsers()
         {
-            //string UserList = "3000:" + clientName;
-            //string EncryptedUserList = EncryptData(UserList);
+            string userList = string.Join(":", clientName.ToArray());
+            string newUserList = "3000:" + userList;
 
-            //foreach (Socket current in clientList)
-            //{
-            //    current.BeginSend(data, 0, data.Length, 0, new AsyncCallback(OnBroadcast), current);
-            //}
+            byte[] EncryptedUserList = Encoding.ASCII.GetBytes(EncryptData(newUserList));
+
+            foreach (Socket current in clientList)
+            {
+                current.BeginSend(EncryptedUserList, 0, EncryptedUserList.Length, 0, new AsyncCallback(OnBroadcast), current);
+            }
         }// End of BroadcastUsers function
 
         //*******************************************************************************************
