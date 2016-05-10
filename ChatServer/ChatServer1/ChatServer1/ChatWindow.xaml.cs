@@ -32,7 +32,6 @@ namespace ChatServer1
         string UserName;
         string messageRecvd;
         System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
-        
 
         public ChatWindow(Socket x, string name)
         {
@@ -45,17 +44,32 @@ namespace ChatServer1
             dispatcherTimer.Start();
             Array.Clear(buffer, 0, buffer.Length);
         }
-       
+        public static string EncryptData(string message)
+        {
+            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.Split('\0').First()));
+            return eMessage;
+        }
+
+        public static string DecryptData(string message)
+        {
+            string deMessage = message.Split('\0').First();
+            byte[] dMsg = Convert.FromBase64String(deMessage);
+            deMessage = Encoding.UTF8.GetString(dMsg);
+            return deMessage;
+        }
+
         public void SocketListen(object sender, EventArgs e)
         {
-            //just need to add the decrypt function to this
             try
             {
                 s.Receive(buffer);
                 //decrypt buffer here
+                messageRecvd = Encoding.UTF8.GetString(buffer);
+                //decrypt the buffer here
+                messageRecvd = DecryptData(messageRecvd);
                 if (buffer[0] != '\0')
                 {
-                    messageRecvd = Encoding.UTF8.GetString(buffer);
+                    //messageRecvd = Encoding.UTF8.GetString(buffer);
                     chatWindowMessage = messageRecvd.Split('\0');
                     if(chatWindowMessage[0].Contains("3000:"))
                     {
@@ -69,6 +83,21 @@ namespace ChatServer1
                             }
                         }
                     }
+                    //else if (chatWindowMessage[0].Contains("3015:"))
+                    //{
+                    //    string[] usernameDel = chatWindowMessage[0].Split(':');
+                    //    if(usernameDel.First() == "3015")
+                    //    {
+                    //        chat_window_users_list.Clear();
+                    //        for (int i =1; i < usernameArray.Length; i++)
+                    //        {
+                    //            if(usernameDel[1] != usernameArray[i])
+                    //            {
+                    //                chat_window_users_list.AppendText(usernameArray[i] + "\n");
+                    //            }
+                    //        }
+                    //    }
+                    //}
                     else
                         chat_window_text_box.AppendText(chatWindowMessage.First());
                     Array.Clear(buffer, 0, buffer.Length);
@@ -84,6 +113,7 @@ namespace ChatServer1
             //Add the encrypt function call here
             message = UserName + ": " + message + "\n";
             //encrypt message here
+            message = EncryptData(message);
             s.Send(Encoding.UTF8.GetBytes(message));
             chat_window_message_input.Clear();
         }
@@ -92,6 +122,13 @@ namespace ChatServer1
         {
             var textBox = sender as TextBox;
             message = textBox.Text;
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            //exit code 3015
+            string userLeft = EncryptData(("3015:" + UserName));
+            s.Send(Encoding.UTF8.GetBytes(userLeft));
         }
     }
 }

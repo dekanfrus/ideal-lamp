@@ -20,11 +20,12 @@
         <Button x:Name="register_submit" Click="register_submit_Click" Content="Register" HorizontalAlignment="Left" Margin="24,215,0,0" VerticalAlignment="Top" Width="75"/>
         <Button x:Name="register_cancel" Click="register_cancel_Click" Content="Cancel" HorizontalAlignment="Left" Margin="151,215,0,0" VerticalAlignment="Top" Width="75" Grid.ColumnSpan="2"/>
         <TextBox x:Name="user_name_textbox" TextChanged="user_name_textbox_TextChanged" HorizontalAlignment="Left" Height="23" Margin="106,19,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
+
+        <PasswordBox x:Name="register_passwordBox" PasswordChanged="register_passwordBox_PasswordChanged" HorizontalAlignment="Left" Margin="106,51,0,0" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
+        <PasswordBox x:Name="register_passwordBox_verify" PasswordChanged="register_passwordBox_verify_PasswordChanged"  HorizontalAlignment="Left" Margin="106,76,0,0" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
         <TextBox x:Name="email_text_box" TextChanged="email_text_box_TextChanged" HorizontalAlignment="Left" Height="23" Margin="106,103,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
         <TextBox x:Name="first_name_text_box" TextChanged="first_name_text_box_TextChanged" HorizontalAlignment="Left" Height="23" Margin="106,131,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
         <TextBox x:Name="last_name_text_box" TextChanged="last_name_text_box_TextChanged" HorizontalAlignment="Left" Height="23" Margin="106,159,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
-        <PasswordBox x:Name="register_passwordBox" PasswordChanged="register_passwordBox_PasswordChanged" HorizontalAlignment="Left" Margin="106,51,0,0" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
-        <PasswordBox x:Name="register_passwordBox_verify" PasswordChanged="register_passwordBox_verify_PasswordChanged"  HorizontalAlignment="Left" Margin="106,76,0,0" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
         <Label x:Name="register_password_mismatch" Content="Password&#xD;&#xA;Mismatch" Grid.Column="1" HorizontalAlignment="Left" Margin="53,53,0,0" VerticalAlignment="Top" Background="#FF1D368B" Foreground="#FFF50F0F"/>
         <Label x:Name="register_submit_error" Content="Please fill out all fields" HorizontalAlignment="Left" Margin="98,187,0,0" VerticalAlignment="Top" Height="27" Grid.ColumnSpan="2" Width="128" Foreground="#FFF90808"/>
         <Label x:Name="registration_username_error" Content="Invalid" Grid.Column="1" HorizontalAlignment="Left" Margin="53,19,0,0" VerticalAlignment="Top" Background="#FF1D368B" Foreground="#FFF50505"/>

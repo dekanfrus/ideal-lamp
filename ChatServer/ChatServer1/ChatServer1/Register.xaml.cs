@@ -51,6 +51,18 @@ namespace ChatServer1
             s.Connect(ipAddress, port);
         }
 
+        public static string EncryptData(string message)
+        {
+            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.Split('\0').First()));
+            return eMessage;
+        }
+
+        public static string DecryptData(string message)
+        {
+            string deMessage = message.Split('\0').First();
+            return deMessage;
+        }
+
         private void submit_button_enable_disable()
         {
             if (userName != null && email != null && firstName != null && lastName != null && password != null && passwordVerify != null && password == passwordVerify && user_name_textbox.Text != ""
@@ -100,15 +112,19 @@ namespace ChatServer1
             {
                 //create data stream to send registration information
                 registrationInformation = register + ":" + userName + ":" + password + ":" + email + ":" + firstName + ":" + lastName;
-                
+                registrationInformation = EncryptData(registrationInformation);
                 //send registration data through socket s
                 s.Send(Encoding.UTF8.GetBytes(registrationInformation));
                 
                 //wait for response
                 byte[] buffer = new byte[300];
                 s.Receive(buffer);
+                string message = Encoding.UTF8.GetString(buffer);
+                //decrypt the buffer here
+                message = DecryptData(message);
+                registrationValue = Int32.Parse(message);
                 //Console.WriteLine(Encoding.UTF8.GetString(buffer));
-                registrationValue = Int32.Parse(Encoding.UTF8.GetString(buffer));
+                //registrationValue = Int32.Parse(Encoding.UTF8.GetString(buffer));
                 //Console.WriteLine(registrationValue);
             }
 

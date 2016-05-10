@@ -3,6 +3,16 @@
 // Computer Networks COSC 4342 - Dr. Kar                                                                                            **
 // Semester Project - Secure Chat Application                                                                                       **
 // Spring 2016                                                                                                                      **
+//                                                                                                                                  **
+// Brief Description:                                                                                                               **
+// This program is the server application for a chat program.  It utilizes asynchronous sockets in order to provide service to      **
+// multiple clients.  It also implements login and register functionality.  The user data is stored on an SQL server hosted by      **
+// Amazon Web Services.  The user passwords are hashed with a SHA256 algorithim before they are sent to the database, and a salt    **
+// is also generated and stored for each user.  Once login is successful, the client data that is sent back and forth is            **
+// encrypted in transit.  The server decrypts the data in order to determine how to handle the messages, logs it, then encrypts it  **
+// again so it can be sent to all client connections unless it is a login, register, or exit message.  The server also maintains    **
+// a list of authenticated clients in the chat room and will update that list as users join and leave.                              **
+//                                                                                                                                  **
 // References:                                                                                                                      **
 // https://msdn.microsoft.com/en-us/library/system.net.sockets.tcpclient.getstream%28v=vs.110%29.aspx?f=255&MSPPError=-2147217396   **
 // https://msdn.microsoft.com/en-us/library/system.net.sockets.tcplistener(v=vs.110).aspx                                           **
@@ -29,12 +39,9 @@ using System.Configuration;
 namespace ChatServer
 {
     //***************************************************************************************
-    // Class Name: ClientData
-    // Description:
-    //
-    //
-    //
-    //
+    // Class Name: ClientData                                                              **
+    // Description:  This is a state object that is created each time a new client is      **
+    //               connected.  It stores various data relevant to each specific client.  **
     //***************************************************************************************
     public class ClientData
     {
@@ -44,18 +51,14 @@ namespace ChatServer
         public const int BufferSize = 1024;
         public byte[] buffer = new byte[BufferSize];
         public StringBuilder clientString = new StringBuilder();
-        public StringBuilder clientName = new StringBuilder();
     }
 
-    //***************************************************************************************
-    // Class Name: server
-    // Description:
-    //
-    //
-    //
-    //
-    //
-    //***************************************************************************************
+    //************************************************************************************************
+    // Class Name: server                                                                           **
+    // Description:  This is the main class for the program.  It contains all of the functionality  **
+    //               necessary for the program to run, with the only exception being the ClientData **
+    //               state object.                                                                  **
+    //************************************************************************************************
     class server
     {
         // Thread signaler of a particular state (System.Threading)
@@ -64,23 +67,15 @@ namespace ChatServer
         // Create a list of clients
         public static List<Socket> clientList = new List<Socket>();
 
-        // Salt and Initialization Vector values for encryption of data
-        private static byte[] Salt = {2, 123,  61, 217, 205, 133, 176, 171, 164, 248, 215, 129, 232, 210, 145, 56,
-                                      45, 133,  55, 137,  95, 174, 245, 179, 205, 140, 190, 215, 110, 122, 169, 95 };
-        private static byte[] IV = { 9, 90, 56, 18, 127, 245, 101, 112, 72, 133, 248, 224, 73, 12, 96, 24, };
+        // Create a list to store the names of currently logged in users
+        public static List<string> clientName = new List<string>();
 
-        private static ICryptoTransform Encryptor, Decryptor;
-        private static System.Text.UTF8Encoding Encoder;
-
-        //***************************************************************************************
-        // Function Name: server
-        // Description:
-        //
-        //
-        //
-        //
-        //
-        //***************************************************************************************
+        //*********************************************************************************************
+        // Function Name: server                                                                     **
+        // Description: This is the primary function for the server class.  It creates a listening   **
+        //              socket, accepts connections and data, and sends data to the connected        **
+        //              clients.                                                                     **
+        //*********************************************************************************************
         public server()
         {
             // Retrieve the IP address of the local machine
@@ -100,17 +95,17 @@ namespace ChatServer
                 {
                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                     logWriter.WriteLine("[+] GURU Server Program Running!");
+                    logWriter.Close();
                 }
 
                 Console.WriteLine("[+] Awaiting Connection...");
-                // Infinite loop to make the server continually run and wait for connections
 
+                // Infinite loop to make the server continually run and wait for connections
                 while (true)
                 {
                     try
                     {
                         completed.Reset();
-                        //Console.WriteLine("[+] Awaiting Connection...");
 
                         // Connects to any pending client requests
                         ServerListener.BeginAccept(new AsyncCallback(AcceptConnection), ServerListener);
@@ -165,11 +160,9 @@ namespace ChatServer
                 {
                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                     logWriter.WriteLine("[+] Connection Received");
+                    logWriter.Close();
                 }
                 Console.WriteLine("[+] Connection Received");
-
-                // Send updated users list to all clients
-                BroadcastUsers();
 
                 // Begin receiving data from the client
                 clientHandler.BeginReceive(clientState.buffer, 0, ClientData.BufferSize, 0, new AsyncCallback(ReceiveData), clientState);
@@ -177,18 +170,21 @@ namespace ChatServer
             catch (Exception error)
             {
                 Console.WriteLine(error.ToString());
+                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                {
+                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+                    logWriter.WriteLine(error.ToString());
+                    logWriter.Close();
+                }
             }
 
         }// End of Accept function
 
-        //***************************************************************************************
-        // Function Name: ConnectToDB
-        // Description: 
-        // Attempts to establish a connection with the EC2 MSSQL database
-        // 
-        //
-        //
-        //***************************************************************************************
+        //*****************************************************************************************
+        // Function Name: ConnectToDB                                                            **
+        // Description:                                                                          **
+        // Attempts to establish a connection with the RDS MSSQL database                        **
+        //*****************************************************************************************
         public static bool ConnectToDB(string userName, string userPassword)
         {
 
@@ -200,7 +196,7 @@ namespace ChatServer
             try
             {
 
-                //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
+                //String that contains connection info for database
                 dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
 
                 //Open up connection to database
@@ -222,14 +218,7 @@ namespace ChatServer
 
                 //The sql input to check if records exist
                 string sqlUserCommand = "SELECT COUNT(*) FROM [User] WHERE username=@User AND userpassword=@Password";
-
-
-                //Console.WriteLine("Hashed User Pass: " + hashRetrievedUserPass); - Debugging purposes only - ADU
-                // The actual command should come from the login or register function rather than being hard coded here - JA
-                // However, this is the syntax.  We should also consider paramaterizing the input to prevent SQLi - JA
-                //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
-
-                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection); 
+                SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection);
 
                 //Paramterizing SQL input - ADU
                 command.Parameters.Add("@User", SqlDbType.VarChar);
@@ -255,6 +244,12 @@ namespace ChatServer
             catch (Exception error)
             {
                 Console.WriteLine(error.ToString());
+                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+                {
+                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+                    logWriter.WriteLine(error.ToString());
+                    logWriter.Close();
+                }
                 return false;
             }
             finally
@@ -263,14 +258,12 @@ namespace ChatServer
             }
         }// End of ConnectToDB Function
 
-        //***************************************************************************************
-        // Function Name: ReceiveData
-        // Description: 
-        //
-        //
-        //
-        //
-        //***************************************************************************************
+        //*****************************************************************************************
+        // Function Name: ReceiveData                                                            **
+        // Description: This function is responsible for receiving all data from the client.     **
+        //              Each client socket will spin up a new thread for that connection which   **
+        //              allows the server to accept multiple connections at a time.              **
+        //*****************************************************************************************
         public static void ReceiveData(IAsyncResult AsyncResult)
         {
 
@@ -303,7 +296,8 @@ namespace ChatServer
                         // Call Login function to query the database and verify credentials
                         int success = Login(clientMessage);
                         byte[] clientReturnInt;
-                        // Depending on authentication results, log and proceed
+
+                        // Depending on authentication results, log and return a code back to the client
                         switch (success)
                         {
                             case 1:
@@ -311,16 +305,23 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Login Successful!");
+                                    logWriter.Close();
                                 }
                                 Console.WriteLine("[+] Login Successful!");
+
+                                // Sends a message to the client that the login was successful
                                 clientReturnInt = Encoding.ASCII.GetBytes("1300");
                                 clientHandler.Send(clientReturnInt);
+
+                                // Send updated users list to all clients
+                                BroadcastUsers();
                                 break;
                             case 2:
                                 using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Login Failed!  Username/Password combination.");
+                                    logWriter.Close();
                                 }
                                 Console.WriteLine("[+] Login Failed!  Username/Password combination.");
                                 clientReturnInt = Encoding.ASCII.GetBytes("1200");
@@ -338,7 +339,7 @@ namespace ChatServer
                         int success = Register(clientMessage);
                         byte[] clientReturnInt;
 
-                        // Depending on the results from Register, log and proceed
+                        // Depending on the results from Register, log and return a code back to the client
                         switch (success)
                         {
                             case 1:
@@ -346,6 +347,7 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Successful!");
+                                    logWriter.Close();
                                     clientReturnInt = Encoding.ASCII.GetBytes("2300");
                                     clientHandler.Send(clientReturnInt);
                                 }
@@ -356,6 +358,7 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Failed!  Invalid Email Address.");
+                                    logWriter.Close();
                                 }
                                 Console.WriteLine("[+] Registration Failed!  Invalid Email Address.");
                                 break;
@@ -364,6 +367,7 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Failed! Username already exists.");
+                                    logWriter.Close();
                                 }
                                 Console.WriteLine("[+] Registration Failed! Username already exists.");
                                 break;
@@ -372,6 +376,7 @@ namespace ChatServer
                                 {
                                     logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                                     logWriter.WriteLine("[+] Registration Failed! Invalid Password.");
+                                    logWriter.Close();
                                 }
                                 Console.WriteLine("[+] Registration Failed! Invalid Password.");
                                 break;
@@ -380,13 +385,19 @@ namespace ChatServer
                         }
                     } // End of Register handler
 
-                    // Placeholder for additional codes
-                    else if (clientMessage.StartsWith("3"))
+                    // If the data received is preceded with the 3015 code, that means a user has left the chat room.
+                    // therefore we split that string, grab the username and remove that user from the connected client list
+                    else if (clientMessage.StartsWith("3015"))
                     {
-                        // Do something else
-                    }
+                        string[] message = clientMessage.Split(':');
 
-                    // Broadcast Message Handler
+                        string removeUser = message[1];
+
+                        clientName.Remove(removeUser);
+
+                        // Rebroadcast the user list to all connected clients
+                        BroadcastUsers();
+                    } // End of user removal process
                     else
                     {
                         // Log the message then call the BroadcastMessage function
@@ -394,15 +405,14 @@ namespace ChatServer
                         {
                             logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                             logWriter.Write(clientMessage);
+                            logWriter.Close();
                         }
                         BroadcastMessage(clientMessage);
                     }// End of Broadcast Message Hanler
                 }// End of receive data if statement
             }// End of try block
-            catch (Exception error)
-            {
-                Console.WriteLine(error.ToString());
-            }
+
+            catch (Exception) { }
 
             // If the client socket is still connected, call the function recursively
             // This is necessary otherwise the thread will exit and the client will no longer be able to send data
@@ -418,18 +428,11 @@ namespace ChatServer
                     {
                         logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
                         logWriter.Write(error);
+                        logWriter.Close();
                     }
                     Console.WriteLine(error.ToString());
                 }
             }
-
-            if (!clientHandler.Connected)
-            {
-                // Remove clientState.activeListener from the linked list
-                // Then send new Users data to the client
-                BroadcastUsers();
-            }
-
         }// End of ReceiveData Function
 
         //*******************************************************************************************
@@ -440,9 +443,11 @@ namespace ChatServer
         //*******************************************************************************************
         public static void BroadcastMessage(string recvdMessage)
         {
-            // Output to server console.  Primarily for testing purposes.
-            Console.Write("Plain Text Message: ");
+            // Output the unencrypted message to the console
+            Console.Write("Plaintext Message: ");
             Console.Write(recvdMessage);
+
+            // Output the encrypted message to the console (used simply for presentation purposes)
             recvdMessage = EncryptData(recvdMessage);
             Console.Write("Encrypted Message: ");
             Console.WriteLine(recvdMessage);
@@ -458,30 +463,26 @@ namespace ChatServer
 
         //*******************************************************************************************
         // Function Name: BroadcastUsers                                                           **
-        // Description:  
-        //               
-        //                                                                                         **
+        // Description:  This function is responsible for sending an updated user list to all      **
+        //               connected clients.  It first adds a user list code to the front of the    **
+        //               string, then converts the List contents to a string with the : delimiter  **
         //*******************************************************************************************
         public static void BroadcastUsers()
         {
-            //Convert List<socket> to a string with ":" delimiter and code 3000
-            //Send string to encryptData() function
-            //Once encrypted, broadcast to all sockets
+            string userList = string.Join(":", clientName.ToArray());
+            string newUserList = "3000:" + userList;
 
-            //recvdMessage = encryptData(recvdMessage);
+            byte[] EncryptedUserList = Encoding.ASCII.GetBytes(EncryptData(newUserList));
 
-            //byte[] data = Encoding.ASCII.GetBytes(clientList);
-            //foreach (Socket current in clientList)
-            //{
-            //    current.BeginSend(data, 0, data.Length, 0, new AsyncCallback(OnBroadcast), current);
-            //}
+            foreach (Socket current in clientList)
+            {
+                current.BeginSend(EncryptedUserList, 0, EncryptedUserList.Length, 0, new AsyncCallback(OnBroadcast), current);
+            }
         }// End of BroadcastUsers function
 
         //*******************************************************************************************
         // Function Name: OnBroadcast                                                              **
-        // Description:  
-        //               
-        //                                                                                         **
+        // Description:  This function simply ends the asynchronous send operation.                **
         //*******************************************************************************************
         public static void OnBroadcast(IAsyncResult AsyncResult)
         {
@@ -507,10 +508,10 @@ namespace ChatServer
             //Need to parameterize the sqlCommand with @symbol to read only as string
             //to prevent SQLi
 
-            
             if (ConnectToDB(userName, userPassword))
             {
                 //Console.WriteLine("Username and password verified"); - For debugging if you need to see if it's being authenticated on server side
+                clientName.Add(userName);
                 return 1;
             }
             else
@@ -518,10 +519,6 @@ namespace ChatServer
                 //Console.WriteLine("Username and password combo is bad"); - For debugging if you need to see if it's being authenticated on server side
                 return 2;
             }
-
-            // If credentials matched and auth
-            // was successful, then return true
-            // otherwise return error code
         }// End of Login function
 
         //*******************************************************************************************
@@ -545,11 +542,6 @@ namespace ChatServer
             result = ConnectToDB(userName, userPassword, userEmail, userFirstName, userLastName);
 
             return result;
-            // If signup was successful,
-            // return true
-            // Otherwise return error code
-
-            //return 1;
         }
 
         //*******************************************************************************************
@@ -560,58 +552,9 @@ namespace ChatServer
         //*******************************************************************************************
         public static string EncryptData(string message)
         {
-
-            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
-
+            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.Split('\0').First()));
             return eMessage;
-
-            //// Create a new object with the RM (AES) algorithm
-            //RijndaelManaged AESEncrypt = new RijndaelManaged();
-
-            //// Populate the encryptor/decryptor with the salt and initialization vector
-            //Encryptor = AESEncrypt.CreateEncryptor(Salt, IV);
-
-            //// Specify the type of encoding we want to use
-            //// Encoder = new System.Text.UTF8Encoding();
-
-            //try
-            //{
-            //    // Convert the message to a byte array
-            //    Byte[] MessageBytes = Convert.FromBase64String(message);
-
-            //    // Create a memory stream object to stream the message to the crypto stream object
-            //    // The Crypto stream object requires a stream object - cannot use a byte array directly
-            //    MemoryStream mStream = new MemoryStream();
-            //    CryptoStream cStream = new CryptoStream(mStream, Encryptor, CryptoStreamMode.Write);
-
-            //    // Write the message to the Crypto Stream object encrypting the data
-            //    cStream.Write(MessageBytes, 0, MessageBytes.Length);
-            //    cStream.FlushFinalBlock();
-
-            //    // Read the encrypted data back from the Crypto Stream object
-            //    mStream.Position = 0;
-            //    byte[] EncryptedMessage = new byte[mStream.Length];
-            //    mStream.Read(EncryptedMessage, 0, EncryptedMessage.Length);
-
-            //    // Close the streams because it's a good idea
-            //    cStream.Close();
-            //    mStream.Close();
-
-            //    // Return the encrypted string back to the calling function
-            //    return Convert.ToBase64String(EncryptedMessage);
-            //}
-            //catch (Exception error)
-            //{
-            //    // Basic logging.  Send the error to the console and the server log, then return an empty string
-            //    using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-            //    {
-            //        logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-            //        logWriter.Write(error.ToString());
-            //    }
-            //    Console.WriteLine(error.ToString());
-            //    return " ";
-            //}
-                }
+        }
 
         //*******************************************************************************************
         // Function Name: DecryptData                                                              **
@@ -621,50 +564,8 @@ namespace ChatServer
         //*******************************************************************************************
         public static string DecryptData(string message)
         {
-            string dMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(message));
-
+            string dMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(message.Split('\0').First()));
             return dMessage;
-            //// Create a new object with the RM (AES) algorithm
-            //RijndaelManaged AESEncrypt = new RijndaelManaged();
-
-            //// Populate the encryptor/decryptor with the salt and initialization vector
-            //Decryptor = AESEncrypt.CreateDecryptor(Salt, IV);
-
-            //// Specify the type of encoding we want to use
-            //Encoder = new System.Text.UTF8Encoding();
-
-            //try
-            //{
-            //    Byte[] EncryptedMessageBytes = Encoding.UTF8.GetBytes(message);
-
-            //    MemoryStream encryptedMessage = new MemoryStream();
-            //    CryptoStream decryptedMessage = new CryptoStream(encryptedMessage, Decryptor, CryptoStreamMode.Write);
-
-            //    decryptedMessage.Write(EncryptedMessageBytes, 0, EncryptedMessageBytes.Length);
-            //    //decryptedMessage.FlushFinalBlock();
-
-            //    encryptedMessage.Position = 0;
-            //    Byte[] DecryptedMessageBytes = new Byte[encryptedMessage.Length];
-
-            //    encryptedMessage.Read(DecryptedMessageBytes, 0, DecryptedMessageBytes.Length);
-
-            //    encryptedMessage.Close();
-            //    //decryptedMessage.Close();
-
-            //    return System.Text.Encoding.UTF8.GetString(DecryptedMessageBytes);
-            //}
-            //catch (Exception error)
-            //{
-            //    // Basic logging.  Send the error to the console and the server log, then return an empty string
-            //    using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-            //    {
-            //        logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-            //        logWriter.Write(error.ToString());
-            //    }
-            //    Console.WriteLine(error.ToString());
-            //    return " ";
-            //}
-            
         }
 
         //***************************************************************************************
@@ -677,13 +578,11 @@ namespace ChatServer
         //***************************************************************************************
         public static int ConnectToDB(string userName, string userPassword, string userMail, string userFirst, string userLast)
         {
-
             //Check to see if the server can initiate a connection to the database server - ADU
             Console.WriteLine("[+] Checking to see if the database is connected...");
             SqlConnection dbConnection = new SqlConnection();
             try
             {
-
                 //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
                 dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
 
@@ -700,7 +599,7 @@ namespace ChatServer
                 //Console.WriteLine("Password Hash in register: "+ passwordHash); - debugging purposes only - ADU
 
                 //This part checks to see if there is more than one user account with that same name
-                SqlCommand userCommand = new SqlCommand(sqlUserCommand, dbConnection); 
+                SqlCommand userCommand = new SqlCommand(sqlUserCommand, dbConnection);
 
                 userCommand.Parameters.Add("@User", SqlDbType.VarChar);
                 userCommand.Parameters["@User"].Value = userName;
@@ -739,7 +638,7 @@ namespace ChatServer
 
                 cmd.Connection = dbConnection;
                 cmd.ExecuteNonQuery();
-                
+
                 dbConnection.Close();
                 return 1; //success
             }
@@ -833,4 +732,4 @@ namespace ChatServer
         //*******************************************************************************************
         public static void Main() { server cServer = new server(); }
     } // End server class
-}// End class
+}// End of program

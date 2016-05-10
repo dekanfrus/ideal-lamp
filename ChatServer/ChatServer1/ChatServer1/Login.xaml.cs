@@ -36,12 +36,12 @@ namespace ChatServer1
         //int loginFail = 1700;
         Socket s;
         //string serverResponse;
-        private static byte[] Salt = {2, 123,  61, 217, 205, 133, 176, 171, 164, 248, 215, 129, 232, 210, 145, 56,
-                                      45, 133,  55, 137,  95, 174, 245, 179, 205, 140, 190, 215, 110, 122, 169, 95 };
-        private static byte[] IV = { 9, 90, 56, 18, 127, 245, 101, 112, 72, 133, 248, 224, 73, 12, 96, 24, };
-
-        private static ICryptoTransform Encryptor, Decryptor;
-        private static System.Text.UTF8Encoding Encoder;
+        //private static byte[] Salt = {2, 123,  61, 217, 205, 133, 176, 171, 164, 248, 215, 129, 232, 210, 145, 56,
+        //                              45, 133,  55, 137,  95, 174, 245, 179, 205, 140, 190, 215, 110, 122, 169, 95 };
+        //private static byte[] IV = { 9, 90, 56, 18, 127, 245, 101, 112, 72, 133, 248, 224, 73, 12, 96, 24, };
+        //
+        //private static ICryptoTransform Encryptor, Decryptor;
+        //private static System.Text.UTF8Encoding Encoder;
 
         public Login()
         {
@@ -49,13 +49,13 @@ namespace ChatServer1
             login_submit.IsEnabled = false;
             //hide the error message label on Log In page for invalid password or user name
             login_error_message.Visibility = Visibility.Collapsed;
-            IPHostEntry host = Dns.Resolve(Dns.GetHostName());
-            IPAddress ipAddress = host.AddressList[0];
-            s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            s.Connect(ipAddress, port);
+            //IPHostEntry host = Dns.Resolve(Dns.GetHostName());
+            //IPAddress ipAddress = host.AddressList[0];
+            //s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            //s.Connect(ipAddress, port);
         }
 
-        public static string EncryptData(string message)
+        /*public static string EncryptData(string message)
         {
             // Create a new object with the RM (AES) algorithm
             RijndaelManaged AESEncrypt = new RijndaelManaged();
@@ -104,12 +104,24 @@ namespace ChatServer1
                 Console.WriteLine(error.ToString());
                 return " ";
             }
+        }*/
+
+        public static string EncryptData(string message)
+        {
+            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message.Split('\0').First()));
+            return eMessage;
         }
 
+        public static string DecryptData(string message)
+        {
+            string deMessage = message.Split('\0').First();
+            return deMessage;
+        }
         private void login_send_data()
         {
             //string host = Dns.GetHostName();
-            string loginInformation = EncryptData("1000:") + userName + EncryptData(":") + password;
+            string loginInformation = "1000:" + userName + ":" + password;// EncryptData("1000:") + userName + EncryptData(":") + password;
+            loginInformation = EncryptData(loginInformation);
             //encrypt loginInformation here
             s.Send(Encoding.UTF8.GetBytes(loginInformation));
         }
@@ -123,8 +135,11 @@ namespace ChatServer1
 
         private void login_submit_Click(object sender, RoutedEventArgs e)
         {
-            userName = EncryptData(userName);
-            password = EncryptData(password);
+            IPHostEntry host = Dns.Resolve(Dns.GetHostName());
+            IPAddress ipAddress = host.AddressList[0];
+            s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            s.Connect(ipAddress, port);
+
             //hide the error message label on Log In page for invalid password or user name
             login_error_message.Visibility = Visibility.Collapsed;
 
@@ -134,8 +149,10 @@ namespace ChatServer1
             //get response
             byte[] buffer = new byte[300];
             s.Receive(buffer);
+            string message = Encoding.UTF8.GetString(buffer);
             //decrypt the buffer here
-            loginStatus = Int32.Parse(Encoding.UTF8.GetString(buffer));
+            message = DecryptData(message);
+            loginStatus = Int32.Parse(message);
 
             //if status returned from server for log in is good then proceed to chat window
             //else display error message
