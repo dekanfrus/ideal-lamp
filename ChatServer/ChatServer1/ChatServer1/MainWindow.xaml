@@ -9,8 +9,8 @@
 
     <Grid>
         <Grid.Background>
-            <!--<ImageBrush ImageSource="C:\Users\Jeff\Source\Repos\ideal-lamp\ChatServer\love-guru.jpg"></ImageBrush>-->
-            <ImageBrush ImageSource="C:\Users\Jeff\Source\Repos\ideal-lamp\ChatServer\ChatServer1\ChatServer1\Images\love-guru.jpg" />
+            <!--><ImageBrush ImageSource="C:\Users\Jeff\Source\Repos\ideal-lamp\ChatServer\love-guru.jpg"></ImageBrush>-->
+            <ImageBrush ImageSource="C:\Users\John\Google Drive\School\Computer Networks\Semester Project\ideal-lamp\ChatServer\ChatServer1\ChatServer1\Images\love-guru.jpg" />
         </Grid.Background>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
