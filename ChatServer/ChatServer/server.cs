@@ -130,14 +130,12 @@ namespace ChatServer
             }
         } // End of server function
 
-        //***************************************************************************************
-        // Function Name: Accept Connection
-        // Description: When a new connection is initiated with the server this function will 
-        // create the necessary socket connections to make sure the client will be able to talk to 
-        // other clients and the server.
-        //
-        //
-        //***************************************************************************************
+        //********************************************************************************************
+        // Function Name: Accept Connection                                                         **
+        // Description: When a new connection is initiated with the server this function will       **
+        // create the necessary socket connections to make sure the client will be able to talk to  **
+        // other clients and the server.                                                            **
+        //********************************************************************************************
         public static void AcceptConnection(IAsyncResult AsyncResult)
         {
             // Tell parent thread to continue accepting connections
@@ -183,7 +181,7 @@ namespace ChatServer
         //*****************************************************************************************
         // Function Name: ConnectToDB                                                            **
         // Description:                                                                          **
-        // Attempts to establish a connection with the RDS MSSQL database   
+        // Attempts to establish a connection with the RDS MSSQL database                        **
         // Used with the login function. Checks to see user exists and that password matches     **
         //*****************************************************************************************
         public static bool ConnectToDB(string userName, string userPassword)
@@ -436,12 +434,12 @@ namespace ChatServer
             }
         }// End of ReceiveData Function
 
-        //*******************************************************************************************
-        // Function Name: BroadcastMessage                                                         **
-        // Description:  Messages received will use this function to broadcast any incoming messages
-        //  to each of the connected users in the clientList. Plaintext and Encrypted text is shown             
-        //  to highlight how the encrption works on the server side.                               **
-        //*******************************************************************************************
+        //**********************************************************************************************************
+        // Function Name: BroadcastMessage                                                                        **
+        // Description:  Messages received will use this function to broadcast any incoming messages              **
+        //               to each of the connected users in the clientList. Plaintext and Encrypted text is shown  **           
+        //               to highlight how the encrption works on the server side.                                 **
+        //**********************************************************************************************************
         public static void BroadcastMessage(string recvdMessage)
         {
             // Output the unencrypted message to the console
@@ -491,12 +489,12 @@ namespace ChatServer
             clientSocket.EndSend(AsyncResult);
         }
 
-        //*******************************************************************************************
-        // Function Name: Login                                                                    **
-        // Description:  Once a user attempts to login this function will use the ConnectToDB function
-        //  to see if record of user exists in the database. Splits the login credential info into two               
-        //  pieces.                                                                                **
-        //*******************************************************************************************
+        //*************************************************************************************************************
+        // Function Name: Login                                                                                      **
+        // Description:  Once a user attempts to login this function will use the ConnectToDB function               **
+        //               to see if record of user exists in the database. Splits the login credential info into two  **             
+        //               pieces.                                                                                     **
+        //*************************************************************************************************************
         public static int Login(string loginInfo)
         {
             // Split the string based on ":" and store in a string array
@@ -522,12 +520,12 @@ namespace ChatServer
             }
         }// End of Login function
 
-        //*******************************************************************************************
-        // Function Name: Register                                                                 **
-        // Description:  If a user wishes to register their username with the chatserver they are sent
-        //  to this function to have credentials split up.              
-        //                                                                                         **
-        //*******************************************************************************************
+        //*************************************************************************************************
+        // Function Name: Register                                                                       **
+        // Description:  If a user wishes to register their username with the chatserver they are sent   **
+        //  to this function to have credentials split up.                                               **
+        //                                                                                               **
+        //*************************************************************************************************
         public static int Register(string RegisterInfo)
         {
             string[] creds = RegisterInfo.Split(':');
@@ -547,9 +545,7 @@ namespace ChatServer
 
         //*******************************************************************************************
         // Function Name: EncryptData                                                              **
-        // Description:  Encrypts the outgoing messages to the clients
-        //               
-        //                                                                                         **
+        // Description:  Encrypts the outgoing messages to the clients                             **
         //*******************************************************************************************
         public static string EncryptData(string message)
         {
@@ -559,9 +555,7 @@ namespace ChatServer
 
         //*******************************************************************************************
         // Function Name: DecryptData                                                              **
-        // Description: Decrypts the incoming messages from the clients  
-        //               
-        //                                                                                         **
+        // Description: Decrypts the incoming messages from the clients                            **
         //*******************************************************************************************
         public static string DecryptData(string message)
         {
@@ -569,14 +563,14 @@ namespace ChatServer
             return dMessage;
         }
 
-        //***************************************************************************************
-        // Function Name: ConnectToDB
-        // Description: 
-        // Attempts to establish a connection with the EC2 MSSQL database
-        // Overloaded method which is used in the registration. 
-        // Passwords are sent to be hashed once they are received.
-        // Small checking of user input is done 
-        //***************************************************************************************
+        //******************************************************************
+        // Function Name: ConnectToDB                                     **
+        // Description:                                                   **
+        // Attempts to establish a connection with the EC2 MSSQL database **
+        // Overloaded method which is used in the registration.           **
+        // Passwords are sent to be hashed once they are received.        **
+        // Small checking of user input is done                           **
+        //******************************************************************
         public static int ConnectToDB(string userName, string userPassword, string userMail, string userFirst, string userLast)
         {
             //Check to see if the server can initiate a connection to the database server - ADU
@@ -655,12 +649,11 @@ namespace ChatServer
             }
         }// End of ConnectToDB Function
 
-        //***************************************************************************************
-        // Function Name: ValidEmailAddr
-        // Description: 
-        // Does some simple checking to verify if email address is valid or not. 
-        // 
-        //***************************************************************************************
+        //***************************************************************************
+        // Function Name: ValidEmailAddr                                           **
+        // Description:                                                            **
+        // Does some simple checking to verify if email address is valid or not.   **
+        //***************************************************************************
         public static bool ValidEmailAddr(string userEmail)
         {
             try
@@ -675,14 +668,14 @@ namespace ChatServer
             }
         }// End of IsValidEmail
 
-        //***************************************************************************************
-        // Function Name: CreateSalt
-        // Description: 
-        // Creates a randomly generated salt to be used with the user password hash
-        // https://crackstation.net/hashing-security.htm#properhashing
-        //https://msdn.microsoft.com/en-us/library/system.security.cryptography.rngcryptoserviceprovider.aspx
-        //https://msdn.microsoft.com/en-us/library/ff649202.aspx
-        //***************************************************************************************
+        //**************************************************************************************************************
+        // Function Name: CreateSalt                                                                                  **
+        // Description:                                                                                               **
+        // Creates a randomly generated salt to be used with the user password hash                                   **
+        // https://crackstation.net/hashing-security.htm#properhashing                                                **
+        //https://msdn.microsoft.com/en-us/library/system.security.cryptography.rngcryptoserviceprovider.aspx         **
+        //https://msdn.microsoft.com/en-us/library/ff649202.aspx                                                      **
+        //**************************************************************************************************************
         private static string CreateSalt(int size)
         {
             // Generate a cryptographic random number using the cryptographic
@@ -696,15 +689,15 @@ namespace ChatServer
 
         } //end of CreateSalt
 
-        //***************************************************************************************
-        // Function Name: CreatePasswordHash
-        // Description: 
-        // Hashes the password with a SHA256 hash
-        // 
-        // https://crackstation.net/hashing-security.htm#properhashing
-        // https://msdn.microsoft.com/en-us/library/system.security.cryptography.rngcryptoserviceprovider.aspx
-        // https://msdn.microsoft.com/en-us/library/ff649202.aspx
-        //***************************************************************************************
+        //***********************************************************************************************************
+        // Function Name: CreatePasswordHash                                                                       **
+        // Description:                                                                                            **
+        // Hashes the password with a SHA256 hash                                                                  **
+        //                                                                                                         **
+        // https://crackstation.net/hashing-security.htm#properhashing                                             **
+        // https://msdn.microsoft.com/en-us/library/system.security.cryptography.rngcryptoserviceprovider.aspx     **
+        // https://msdn.microsoft.com/en-us/library/ff649202.aspx                                                  **
+        //***********************************************************************************************************
         private static string CreatePasswordHash(string userPassword, string salt)
         {
             //Hash function 
