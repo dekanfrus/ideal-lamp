@@ -65,7 +65,7 @@ namespace ChatServer
         public static List<Socket> clientList = new List<Socket>();
 
         // Salt and Initialization Vector values for encryption of data
-        private static byte[] Salt = {2, 123,  61, 217, 205, 133, 176, 171, 164, 248, 215, 129, 232, 210, 145, 56, 
+        private static byte[] Salt = {2, 123,  61, 217, 205, 133, 176, 171, 164, 248, 215, 129, 232, 210, 145, 56,
                                       45, 133,  55, 137,  95, 174, 245, 179, 205, 140, 190, 215, 110, 122, 169, 95 };
         private static byte[] IV = { 9, 90, 56, 18, 127, 245, 101, 112, 72, 133, 248, 224, 73, 12, 96, 24, };
 
@@ -185,7 +185,7 @@ namespace ChatServer
         // Function Name: ConnectToDB
         // Description: 
         // Attempts to establish a connection with the EC2 MSSQL database
-        // Used with the login function. Checks to see user exists and that password matches
+        // 
         //
         //
         //***************************************************************************************
@@ -199,7 +199,7 @@ namespace ChatServer
 
             try
             {
-               
+
                 //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
                 dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
 
@@ -230,18 +230,17 @@ namespace ChatServer
                 //string sqlCommand = ("Select * FROM [User] WHERE username ="+userCreds);
 
                 SqlCommand command = new SqlCommand(sqlUserCommand, dbConnection); 
-                
+
                 //Paramterizing SQL input - ADU
                 command.Parameters.Add("@User", SqlDbType.VarChar);
                 command.Parameters["@User"].Value = userName;
 
                 command.Parameters.Add("@Password", SqlDbType.VarChar);
-                command.Parameters["@Password"].Value = hashRetrievedUserPass; //uses the hashed password
+                command.Parameters["@Password"].Value = hashRetrievedUserPass;
 
-                //Check to see if user exists
                 int userCount = (int)command.ExecuteScalar();
 
-                if (userCount > 0)//user exists info matches
+                if (userCount > 0)
                 {
                     dbConnection.Close();
                     return true;
@@ -249,9 +248,9 @@ namespace ChatServer
                 else
                 {
                     dbConnection.Close();
-                    return false;//user does not exist info does not match
+                    return false;
                 }
-                
+
             }
             catch (Exception error)
             {
@@ -504,7 +503,11 @@ namespace ChatServer
 
             string userName = creds[1];
             string userPassword = creds[2];
-                        
+
+            //Need to parameterize the sqlCommand with @symbol to read only as string
+            //to prevent SQLi
+
+            
             if (ConnectToDB(userName, userPassword))
             {
                 //Console.WriteLine("Username and password verified"); - For debugging if you need to see if it's being authenticated on server side
@@ -524,8 +527,8 @@ namespace ChatServer
         //*******************************************************************************************
         // Function Name: Register                                                                 **
         // Description:  
-        // Takes in the user registration info and split it up. Send to overloaded ConnectToDB              
-        // result is then sent back to the calling function                                        **
+        //               
+        //                                                                                         **
         //*******************************************************************************************
         public static int Register(string RegisterInfo)
         {
@@ -536,8 +539,8 @@ namespace ChatServer
             string userEmail = creds[3];
             string userFirstName = creds[4];
             string userLastName = creds[5];
-            
-            int result;//to store if the result passed or not
+
+            int result;
 
             result = ConnectToDB(userName, userPassword, userEmail, userFirstName, userLastName);
 
@@ -557,54 +560,58 @@ namespace ChatServer
         //*******************************************************************************************
         public static string EncryptData(string message)
         {
-            // Create a new object with the RM (AES) algorithm
-            RijndaelManaged AESEncrypt = new RijndaelManaged();
 
-            // Populate the encryptor/decryptor with the salt and initialization vector
-            Encryptor = AESEncrypt.CreateEncryptor(Salt, IV);
-            Decryptor = AESEncrypt.CreateDecryptor(Salt, IV);
+            string eMessage = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
 
-            // Specify the type of encoding we want to use
-            Encoder = new System.Text.UTF8Encoding();
+            return eMessage;
 
-            try
-            {
-                // Convert the message to a byte array
-                Byte[] MessageBytes = Encoding.UTF8.GetBytes(message);
-                
-                // Create a memory stream object to stream the message to the crypto stream object
-                // The Crypto stream object requires a stream object - cannot use a byte array directly
-                MemoryStream mStream = new MemoryStream();
-                CryptoStream cStream = new CryptoStream(mStream, Encryptor, CryptoStreamMode.Write);
+            //// Create a new object with the RM (AES) algorithm
+            //RijndaelManaged AESEncrypt = new RijndaelManaged();
 
-                // Write the message to the Crypto Stream object encrypting the data
-                cStream.Write(MessageBytes, 0, MessageBytes.Length);
-                cStream.FlushFinalBlock();
+            //// Populate the encryptor/decryptor with the salt and initialization vector
+            //Encryptor = AESEncrypt.CreateEncryptor(Salt, IV);
 
-                // Read the encrypted data back from the Crypto Stream object
-                mStream.Position = 0;
-                byte[] EncryptedMessage = new byte[mStream.Length];
-                mStream.Read(EncryptedMessage, 0, EncryptedMessage.Length);
+            //// Specify the type of encoding we want to use
+            //// Encoder = new System.Text.UTF8Encoding();
 
-                // Close the streams because it's a good idea
-                cStream.Close();
-                mStream.Close();
+            //try
+            //{
+            //    // Convert the message to a byte array
+            //    Byte[] MessageBytes = Convert.FromBase64String(message);
 
-                // Return the encrypted string back to the calling function
-                return System.Text.Encoding.UTF8.GetString(EncryptedMessage);
-            }
-            catch (Exception error)
-            {
-                // Basic logging.  Send the error to the console and the server log, then return an empty string
-                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-                {
-                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-                    logWriter.Write(error.ToString());
+            //    // Create a memory stream object to stream the message to the crypto stream object
+            //    // The Crypto stream object requires a stream object - cannot use a byte array directly
+            //    MemoryStream mStream = new MemoryStream();
+            //    CryptoStream cStream = new CryptoStream(mStream, Encryptor, CryptoStreamMode.Write);
+
+            //    // Write the message to the Crypto Stream object encrypting the data
+            //    cStream.Write(MessageBytes, 0, MessageBytes.Length);
+            //    cStream.FlushFinalBlock();
+
+            //    // Read the encrypted data back from the Crypto Stream object
+            //    mStream.Position = 0;
+            //    byte[] EncryptedMessage = new byte[mStream.Length];
+            //    mStream.Read(EncryptedMessage, 0, EncryptedMessage.Length);
+
+            //    // Close the streams because it's a good idea
+            //    cStream.Close();
+            //    mStream.Close();
+
+            //    // Return the encrypted string back to the calling function
+            //    return Convert.ToBase64String(EncryptedMessage);
+            //}
+            //catch (Exception error)
+            //{
+            //    // Basic logging.  Send the error to the console and the server log, then return an empty string
+            //    using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+            //    {
+            //        logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+            //        logWriter.Write(error.ToString());
+            //    }
+            //    Console.WriteLine(error.ToString());
+            //    return " ";
+            //}
                 }
-                Console.WriteLine(error.ToString());
-                return " ";
-            }
-        }
 
         //*******************************************************************************************
         // Function Name: DecryptData                                                              **
@@ -614,43 +621,49 @@ namespace ChatServer
         //*******************************************************************************************
         public static string DecryptData(string message)
         {
-            Byte[] EncryptedMessageBytes = Encoding.UTF8.GetBytes(message);
+            string dMessage = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(message));
 
-            MemoryStream encryptedMessage = new MemoryStream();
-            CryptoStream decryptedMessage = new CryptoStream(encryptedMessage, Decryptor, CryptoStreamMode.Write);
+            return dMessage;
+            //// Create a new object with the RM (AES) algorithm
+            //RijndaelManaged AESEncrypt = new RijndaelManaged();
 
-            try
-            {
-                decryptedMessage.Write(EncryptedMessageBytes, 0, EncryptedMessageBytes.Length);
-                decryptedMessage.FlushFinalBlock();
+            //// Populate the encryptor/decryptor with the salt and initialization vector
+            //Decryptor = AESEncrypt.CreateDecryptor(Salt, IV);
 
-                encryptedMessage.Position = 0;
-                Byte[] DecryptedMessageBytes = new Byte[encryptedMessage.Length];
+            //// Specify the type of encoding we want to use
+            //Encoder = new System.Text.UTF8Encoding();
 
-                encryptedMessage.Read(DecryptedMessageBytes, 0, DecryptedMessageBytes.Length);
+            //try
+            //{
+            //    Byte[] EncryptedMessageBytes = Encoding.UTF8.GetBytes(message);
 
-                encryptedMessage.Close();
-                decryptedMessage.Close();
+            //    MemoryStream encryptedMessage = new MemoryStream();
+            //    CryptoStream decryptedMessage = new CryptoStream(encryptedMessage, Decryptor, CryptoStreamMode.Write);
 
-                return System.Text.Encoding.UTF8.GetString(DecryptedMessageBytes);
-            }
-            catch (Exception error)
-            {
-                // Basic logging.  Send the error to the console and the server log, then return an empty string
-                using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
-                {
-                    logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
-                    logWriter.Write(error.ToString());
-                }
-                Console.WriteLine(error.ToString());
-                return " ";
-            }
-            finally
-            {
-                encryptedMessage.Close();
-                decryptedMessage.Close();
-            }
-            return " ";
+            //    decryptedMessage.Write(EncryptedMessageBytes, 0, EncryptedMessageBytes.Length);
+            //    //decryptedMessage.FlushFinalBlock();
+
+            //    encryptedMessage.Position = 0;
+            //    Byte[] DecryptedMessageBytes = new Byte[encryptedMessage.Length];
+
+            //    encryptedMessage.Read(DecryptedMessageBytes, 0, DecryptedMessageBytes.Length);
+
+            //    encryptedMessage.Close();
+            //    //decryptedMessage.Close();
+
+            //    return System.Text.Encoding.UTF8.GetString(DecryptedMessageBytes);
+            //}
+            //catch (Exception error)
+            //{
+            //    // Basic logging.  Send the error to the console and the server log, then return an empty string
+            //    using (StreamWriter logWriter = File.AppendText("ServerLog.txt"))
+            //    {
+            //        logWriter.Write("{0} {1}:  ", DateTime.Now.ToLongTimeString(), DateTime.Now.ToLongDateString());
+            //        logWriter.Write(error.ToString());
+            //    }
+            //    Console.WriteLine(error.ToString());
+            //    return " ";
+            //}
             
         }
 
@@ -701,19 +714,19 @@ namespace ChatServer
                 if (userCount > 0)
                 {
                     dbConnection.Close();
-                    //Console.WriteLine("[+] Username already in use"); - debugging only
+                    Console.WriteLine("[+] Username already in use");
                     return 3;
                 }
                 else if (!ValidEmailAddr(userMail))
                 {
                     dbConnection.Close();
-                    //Console.WriteLine("[+] Bad Email"); - debugging only
+                    Console.WriteLine("[+] Bad Email");
                     return 2;
                 }
-                else if (userPassword.Length < 3) //simple password length checker
+                else if (userPassword.Length < 3)
                 {
                     dbConnection.Close();
-                    //Console.WriteLine("[+] Bad password length"); - debugging only
+                    Console.WriteLine("[+] Bad password length");
                     return 4;
                 }
 
@@ -724,7 +737,6 @@ namespace ChatServer
                 cmd.CommandText = "INSERT INTO [User] (username, userpassword, userSalt, userEmail, UserFirstName, UserLastName) VALUES ('" + userName + "','" + passwordHash + "','" + userSalt + "','" + userMail + "','" +
                 userFirst + "','" + userLast + "')";
 
-                //Updates info in database
                 cmd.Connection = dbConnection;
                 cmd.ExecuteNonQuery();
                 
@@ -734,7 +746,7 @@ namespace ChatServer
             catch (Exception error)
             {
                 Console.WriteLine(error.ToString());
-                return -2; //random failure int
+                return -2;
             }
             finally
             {
@@ -745,21 +757,18 @@ namespace ChatServer
         //***************************************************************************************
         // Function Name: ValidEmailAddr
         // Description: 
-        // Does some simple checking to verify if email address format is valid or not. 
+        // Does some simple checking to verify if email address is valid or not. 
         // 
         //***************************************************************************************
         public static bool ValidEmailAddr(string userEmail)
         {
             try
             {
-                //Simple check to see if email string can be added to the object. 
-                //if successful return true
-                var emailAddr = new System.Net.Mail.MailAddress(userEmail); 
+                var emailAddr = new System.Net.Mail.MailAddress(userEmail);
                 return emailAddr.Address == userEmail;
             }
             catch
             {
-                //return false if email format is not valid
                 return false;
             }
         }// End of IsValidEmail
@@ -802,7 +811,7 @@ namespace ChatServer
             //string which will carry the hashed password
             string hashedPassword = String.Empty;
 
-            //Cool hashing for each byte 
+            //does some hashing stuff
             byte[] crypto = crypt.ComputeHash(Encoding.ASCII.GetBytes(userPassword), 0, Encoding.ASCII.GetByteCount(userPassword));
 
             //for each byte add it to the hashedPassword string
