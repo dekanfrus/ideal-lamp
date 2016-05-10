@@ -131,10 +131,10 @@ namespace ChatServer
         } // End of server function
 
         //***************************************************************************************
-        // Function Name: Acception Connection
-        // Description:
-        //
-        //
+        // Function Name: Accept Connection
+        // Description: When a new connection is initiated with the server this function will 
+        // create the necessary socket connections to make sure the client will be able to talk to 
+        // other clients and the server.
         //
         //
         //***************************************************************************************
@@ -183,7 +183,8 @@ namespace ChatServer
         //*****************************************************************************************
         // Function Name: ConnectToDB                                                            **
         // Description:                                                                          **
-        // Attempts to establish a connection with the RDS MSSQL database                        **
+        // Attempts to establish a connection with the RDS MSSQL database   
+        // Used with the login function. Checks to see user exists and that password matches     **
         //*****************************************************************************************
         public static bool ConnectToDB(string userName, string userPassword)
         {
@@ -202,11 +203,11 @@ namespace ChatServer
                 //Open up connection to database
                 dbConnection.Open();
 
-                //just for debugging purposes will remove once code is in production - ADU
+                //just for debugging purposes - ADU
                 Console.WriteLine("[+] DB connected!");
 
 
-                //Check to see if we can pull down the salt from the user Salt
+                //Checks to see if we can pull down the salt from the user Salt
                 SqlCommand conn = new SqlCommand("SELECT userSalt FROM [User] WHERE username = @User", dbConnection);
 
                 conn.Parameters.Add("@User", SqlDbType.VarChar);
@@ -229,7 +230,7 @@ namespace ChatServer
 
                 int userCount = (int)command.ExecuteScalar();
 
-                if (userCount > 0)
+                if (userCount > 0) //Checks to see if a match was found for the requested login attempt
                 {
                     dbConnection.Close();
                     return true;
@@ -437,9 +438,9 @@ namespace ChatServer
 
         //*******************************************************************************************
         // Function Name: BroadcastMessage                                                         **
-        // Description:  
-        //               
-        //                                                                                         **
+        // Description:  Messages received will use this function to broadcast any incoming messages
+        //  to each of the connected users in the clientList. Plaintext and Encrypted text is shown             
+        //  to highlight how the encrption works on the server side.                               **
         //*******************************************************************************************
         public static void BroadcastMessage(string recvdMessage)
         {
@@ -492,9 +493,9 @@ namespace ChatServer
 
         //*******************************************************************************************
         // Function Name: Login                                                                    **
-        // Description:  
-        //               
-        //                                                                                         **
+        // Description:  Once a user attempts to login this function will use the ConnectToDB function
+        //  to see if record of user exists in the database. Splits the login credential info into two               
+        //  pieces.                                                                                **
         //*******************************************************************************************
         public static int Login(string loginInfo)
         {
@@ -506,7 +507,7 @@ namespace ChatServer
             string userPassword = creds[2];
 
             //Need to parameterize the sqlCommand with @symbol to read only as string
-            //to prevent SQLi
+            //should prevent SQLi
 
             if (ConnectToDB(userName, userPassword))
             {
@@ -523,8 +524,8 @@ namespace ChatServer
 
         //*******************************************************************************************
         // Function Name: Register                                                                 **
-        // Description:  
-        //               
+        // Description:  If a user wishes to register their username with the chatserver they are sent
+        //  to this function to have credentials split up.              
         //                                                                                         **
         //*******************************************************************************************
         public static int Register(string RegisterInfo)
@@ -537,16 +538,16 @@ namespace ChatServer
             string userFirstName = creds[4];
             string userLastName = creds[5];
 
-            int result;
+            int result; // sent back to calling function to determine if registration was successful or not
 
-            result = ConnectToDB(userName, userPassword, userEmail, userFirstName, userLastName);
+            result = ConnectToDB(userName, userPassword, userEmail, userFirstName, userLastName); //overloaded function
 
             return result;
         }
 
         //*******************************************************************************************
         // Function Name: EncryptData                                                              **
-        // Description:  
+        // Description:  Encrypts the outgoing messages to the clients
         //               
         //                                                                                         **
         //*******************************************************************************************
@@ -558,7 +559,7 @@ namespace ChatServer
 
         //*******************************************************************************************
         // Function Name: DecryptData                                                              **
-        // Description:  
+        // Description: Decrypts the incoming messages from the clients  
         //               
         //                                                                                         **
         //*******************************************************************************************
@@ -613,19 +614,19 @@ namespace ChatServer
                 if (userCount > 0)
                 {
                     dbConnection.Close();
-                    Console.WriteLine("[+] Username already in use");
+                    //Console.WriteLine("[+] Username already in use"); - debugging on server side only
                     return 3;
                 }
                 else if (!ValidEmailAddr(userMail))
                 {
                     dbConnection.Close();
-                    Console.WriteLine("[+] Bad Email");
+                    //Console.WriteLine("[+] Bad Email"); - debugging on server side only
                     return 2;
                 }
                 else if (userPassword.Length < 3)
                 {
                     dbConnection.Close();
-                    Console.WriteLine("[+] Bad password length");
+                    //Console.WriteLine("[+] Bad password length"); - debugging on server side only
                     return 4;
                 }
 
@@ -636,6 +637,7 @@ namespace ChatServer
                 cmd.CommandText = "INSERT INTO [User] (username, userpassword, userSalt, userEmail, UserFirstName, UserLastName) VALUES ('" + userName + "','" + passwordHash + "','" + userSalt + "','" + userMail + "','" +
                 userFirst + "','" + userLast + "')";
 
+                //uses the above sql input to update info in database
                 cmd.Connection = dbConnection;
                 cmd.ExecuteNonQuery();
 
@@ -663,6 +665,7 @@ namespace ChatServer
         {
             try
             {
+                //Attempts to enter the email address in the .Net standard. If it is accepted the code will return as true
                 var emailAddr = new System.Net.Mail.MailAddress(userEmail);
                 return emailAddr.Address == userEmail;
             }
@@ -710,10 +713,10 @@ namespace ChatServer
             //string which will carry the hashed password
             string hashedPassword = String.Empty;
 
-            //does some hashing stuff
+            //Creates a hash in byte form using the SHA256 hashing algorithm
             byte[] crypto = crypt.ComputeHash(Encoding.ASCII.GetBytes(userPassword), 0, Encoding.ASCII.GetByteCount(userPassword));
 
-            //for each byte add it to the hashedPassword string
+            //for each byte in cryptio add it to the hashedPassword string
             foreach (byte theByte in crypto)
             {
                 hashedPassword += theByte.ToString("x2");
