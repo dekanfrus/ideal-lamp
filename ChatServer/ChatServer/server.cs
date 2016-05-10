@@ -3,6 +3,16 @@
 // Computer Networks COSC 4342 - Dr. Kar                                                                                            **
 // Semester Project - Secure Chat Application                                                                                       **
 // Spring 2016                                                                                                                      **
+//                                                                                                                                  **
+// Brief Description:                                                                                                               **
+// This program is the server application for a chat program.  It utilizes asynchronous sockets in order to provide service to      **
+// multiple clients.  It also implements login and register functionality.  The user data is stored on an SQL server hosted by      **
+// Amazon Web Services.  The user passwords are hashed with a SHA256 algorithim before they are sent to the database, and a salt    **
+// is also generated and stored for each user.  Once login is successful, the client data that is sent back and forth is            **
+// encrypted in transit.  The server decrypts the data in order to determine how to handle the messages, logs it, then encrypts it  **
+// again so it can be sent to all client connections unless it is a login, register, or exit message.  The server also maintains    **
+// a list of authenticated clients in the chat room and will update that list as users join and leave.                              **
+//                                                                                                                                  **
 // References:                                                                                                                      **
 // https://msdn.microsoft.com/en-us/library/system.net.sockets.tcpclient.getstream%28v=vs.110%29.aspx?f=255&MSPPError=-2147217396   **
 // https://msdn.microsoft.com/en-us/library/system.net.sockets.tcplistener(v=vs.110).aspx                                           **
@@ -60,15 +70,12 @@ namespace ChatServer
         // Create a list to store the names of currently logged in users
         public static List<string> clientName = new List<string>();
 
-        //***************************************************************************************
-        // Function Name: server
-        // Description:
-        //
-        //
-        //
-        //
-        //
-        //***************************************************************************************
+        //*********************************************************************************************
+        // Function Name: server                                                                     **
+        // Description: This is the primary function for the server class.  It creates a listening   **
+        //              socket, accepts connections and data, and sends data to the connected        **
+        //              clients.                                                                     **
+        //*********************************************************************************************
         public server()
         {
             // Retrieve the IP address of the local machine
@@ -92,8 +99,8 @@ namespace ChatServer
                 }
 
                 Console.WriteLine("[+] Awaiting Connection...");
-                // Infinite loop to make the server continually run and wait for connections
 
+                // Infinite loop to make the server continually run and wait for connections
                 while (true)
                 {
                     try
@@ -173,14 +180,11 @@ namespace ChatServer
 
         }// End of Accept function
 
-        //***************************************************************************************
-        // Function Name: ConnectToDB
-        // Description: 
-        // Attempts to establish a connection with the EC2 MSSQL database
-        // 
-        //
-        //
-        //***************************************************************************************
+        //*****************************************************************************************
+        // Function Name: ConnectToDB                                                            **
+        // Description:                                                                          **
+        // Attempts to establish a connection with the RDS MSSQL database                        **
+        //*****************************************************************************************
         public static bool ConnectToDB(string userName, string userPassword)
         {
 
@@ -192,7 +196,7 @@ namespace ChatServer
             try
             {
 
-                //String that contains connection info for database... Encryption option is not supported. Need to check connection string to see how to implement it
+                //String that contains connection info for database
                 dbConnection.ConnectionString = @"Server=ec2-52-4-79-59.compute-1.amazonaws.com, 1433; Database=chatserver; User Id= Administrator; Password=U%GT4nDTZk|dX-A\ZrS*%Imm,A";
 
                 //Open up connection to database
@@ -254,14 +258,12 @@ namespace ChatServer
             }
         }// End of ConnectToDB Function
 
-        //***************************************************************************************
-        // Function Name: ReceiveData
-        // Description: 
-        //
-        //
-        //
-        //
-        //***************************************************************************************
+        //*****************************************************************************************
+        // Function Name: ReceiveData                                                            **
+        // Description: This function is responsible for receiving all data from the client.     **
+        //              Each client socket will spin up a new thread for that connection which   **
+        //              allows the server to accept multiple connections at a time.              **
+        //*****************************************************************************************
         public static void ReceiveData(IAsyncResult AsyncResult)
         {
 
@@ -294,7 +296,8 @@ namespace ChatServer
                         // Call Login function to query the database and verify credentials
                         int success = Login(clientMessage);
                         byte[] clientReturnInt;
-                        // Depending on authentication results, log and proceed
+
+                        // Depending on authentication results, log and return a code back to the client
                         switch (success)
                         {
                             case 1:
@@ -336,7 +339,7 @@ namespace ChatServer
                         int success = Register(clientMessage);
                         byte[] clientReturnInt;
 
-                        // Depending on the results from Register, log and proceed
+                        // Depending on the results from Register, log and return a code back to the client
                         switch (success)
                         {
                             case 1:
@@ -381,6 +384,9 @@ namespace ChatServer
                                 break;
                         }
                     } // End of Register handler
+
+                    // If the data received is preceded with the 3015 code, that means a user has left the chat room.
+                    // therefore we split that string, grab the username and remove that user from the connected client list
                     else if (clientMessage.StartsWith("3015"))
                     {
                         string[] message = clientMessage.Split(':');
@@ -389,8 +395,9 @@ namespace ChatServer
 
                         clientName.Remove(removeUser);
 
+                        // Rebroadcast the user list to all connected clients
                         BroadcastUsers();
-                    }
+                    } // End of user removal process
                     else
                     {
                         // Log the message then call the BroadcastMessage function
@@ -440,10 +447,10 @@ namespace ChatServer
             Console.Write("Plaintext Message: ");
             Console.Write(recvdMessage);
 
+            // Output the encrypted message to the console (used simply for presentation purposes)
             recvdMessage = EncryptData(recvdMessage);
             Console.Write("Encrypted Message: ");
             Console.WriteLine(recvdMessage);
-
 
             // Convert the message string to a byte array and then send
             // all data to all sockets in the client list (list<socket>)
@@ -456,9 +463,9 @@ namespace ChatServer
 
         //*******************************************************************************************
         // Function Name: BroadcastUsers                                                           **
-        // Description:  
-        //               
-        //                                                                                         **
+        // Description:  This function is responsible for sending an updated user list to all      **
+        //               connected clients.  It first adds a user list code to the front of the    **
+        //               string, then converts the List contents to a string with the : delimiter  **
         //*******************************************************************************************
         public static void BroadcastUsers()
         {
@@ -475,9 +482,7 @@ namespace ChatServer
 
         //*******************************************************************************************
         // Function Name: OnBroadcast                                                              **
-        // Description:  
-        //               
-        //                                                                                         **
+        // Description:  This function simply ends the asynchronous send operation.                **
         //*******************************************************************************************
         public static void OnBroadcast(IAsyncResult AsyncResult)
         {
@@ -727,4 +732,4 @@ namespace ChatServer
         //*******************************************************************************************
         public static void Main() { server cServer = new server(); }
     } // End server class
-}// End class
+}// End of program
